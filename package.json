@@ -1,0 +1,15 @@
+{
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "@types/bun": "latest"
+  },
+  "name": "nets-monorepo",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "pino": "^10.3.1"
+  }
+}
