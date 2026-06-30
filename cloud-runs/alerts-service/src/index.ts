@@ -1,5 +1,6 @@
 import Elysia from "elysia";
 import { authGuard } from "./guards/auth.guard";
+import { alertRoutes } from "../../plugins/alerts.plugin";
 
 export const app = new Elysia()
   .use(authGuard)
@@ -10,4 +11,5 @@ export const app = new Elysia()
       details: error,
     };
   })
+  .use(alertRoutes)
   .listen(3001);

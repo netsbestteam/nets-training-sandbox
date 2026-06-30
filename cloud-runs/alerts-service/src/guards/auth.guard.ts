@@ -8,7 +8,7 @@ const JWKS = createRemoteJWKSet(
 );
 
 export const authGuard = (app: Elysia) =>
-  app.onBeforeHandle(async ({ headers }) => {
+  app.derive(async ({ headers }) => {
     const authHeader = headers["authorization"];
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -19,7 +19,6 @@ export const authGuard = (app: Elysia) =>
     const token = authHeader.split(" ")[1]!;
 
     try {
-      // Verify token signature against Keycloak JWKS
       const { payload } = await jwtVerify(token, JWKS);
       return { user: payload };
     } catch (error) {
