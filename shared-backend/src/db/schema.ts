@@ -27,7 +27,7 @@ export const cameras = cameraSchema.table(
       mode: "xy",
       srid: 4326,
     }).notNull(),
-    direction: numeric(),
+    direction: numeric("direction", { mode: "number" }),
   },
   (table) => [
     check(
@@ -45,7 +45,7 @@ export const alerts = cameraSchema.table(
   "alerts",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    severity: numeric().notNull(),
+    severity: numeric("severity", { mode: "number" }).notNull(),
     alert_type: text(),
     alert_time: timestamp().notNull().defaultNow(),
     status: text().notNull(),
