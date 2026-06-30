@@ -1,9 +1,14 @@
 {
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "latest",
     "@types/node": "^26.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "prettier": "3.9.3",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "@types/bun": "latest"
+    "typescript-eslint": "^8.62.0"
   },
   "name": "nets-monorepo",
   "module": "index.ts",
