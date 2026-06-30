@@ -26,7 +26,7 @@ export const cameras = cameraSchema.table(
       type: "point",
       mode: "xy",
       srid: 4326,
-    }).notNull(),
+    }),
     direction: numeric("direction", { mode: "number" }),
   },
   (table) => [
@@ -53,7 +53,7 @@ export const alerts = cameraSchema.table(
       type: "point",
       mode: "xy",
       srid: 4326,
-    }).notNull(),
+    }),
     camera_id: uuid("camera_id").references(() => cameras.id, {
       onDelete: "cascade",
     }),

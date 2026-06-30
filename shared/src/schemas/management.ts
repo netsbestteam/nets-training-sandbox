@@ -14,7 +14,7 @@ export const AlertSchema = z.object({
 export const CameraSchema = z.object({
   name: z.string(),
   status: z.enum(["active", "inactive", "fault"]),
-  location: LocationSchema,
+  location: LocationSchema.optional(),
   direction: z.number().gte(0).lte(360).optional(),
 });
 
