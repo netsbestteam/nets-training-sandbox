@@ -22,7 +22,11 @@ export const cameras = cameraSchema.table(
     installationDate: timestamp("installation_date", { withTimezone: true })
       .notNull()
       .defaultNow(),
-    location: geometry("location", { type: "point", mode: "xy", srid: 4326 }),
+    location: geometry("location", {
+      type: "point",
+      mode: "xy",
+      srid: 4326,
+    }).notNull(),
     direction: numeric(),
   },
   (table) => [
@@ -41,11 +45,15 @@ export const alerts = cameraSchema.table(
   "alerts",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    severity: numeric(),
+    severity: numeric().notNull(),
     alert_type: text(),
     alert_time: timestamp().notNull().defaultNow(),
     status: text().notNull(),
-    location: geometry("location", { type: "point", mode: "xy", srid: 4326 }),
+    location: geometry("location", {
+      type: "point",
+      mode: "xy",
+      srid: 4326,
+    }).notNull(),
     camera_id: uuid("camera_id").references(() => cameras.id, {
       onDelete: "cascade",
     }),
