@@ -16,7 +16,7 @@ const cameraSchema = pgSchema("camera");
 export const cameras = cameraSchema.table(
   "cameras",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    camera_id: uuid("camera_id").primaryKey().defaultRandom(),
     camera_name: text().notNull(),
     status: text().notNull(),
     installationDate: timestamp("installation_date", { withTimezone: true })
@@ -44,7 +44,7 @@ export const cameras = cameraSchema.table(
 export const alerts = cameraSchema.table(
   "alerts",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    alert_id: uuid("alert_id").primaryKey().defaultRandom(),
     severity: numeric("severity", { mode: "number" }).notNull(),
     alert_type: text(),
     alert_time: timestamp().notNull().defaultNow(),
@@ -54,7 +54,7 @@ export const alerts = cameraSchema.table(
       mode: "xy",
       srid: 4326,
     }),
-    camera_id: uuid("camera_id").references(() => cameras.id, {
+    camera_id: uuid("camera_id").references(() => cameras.camera_id, {
       onDelete: "cascade",
     }),
   },
@@ -80,7 +80,7 @@ export const alert_assignments = cameraSchema.table(
     investigatorId: uuid("id").references(() => investigators.id, {
       onDelete: "restrict",
     }),
-    alertId: uuid("alert_id").references(() => alerts.id, {
+    alertId: uuid("alert_id").references(() => alerts.alert_id, {
       onDelete: "cascade",
     }),
     assignment_start: timestamp("assignment_start", { withTimezone: true }),
