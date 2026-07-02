@@ -1,23 +1,85 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { AlertSchema } from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
-import { alerts } from "../../../../shared-backend/src/db/schema";
+import {
+  alert_assignments,
+  alerts,
+} from "../../../../shared-backend/src/db/schema";
+import { eq } from "drizzle-orm";
+import { logger } from "../../../../shared-backend/src/logger";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
-    //const result = await db.select().from(alerts);
-    console.log("e");
+    try {
+      logger.info("Getting alerts");
+      const result = await db.select().from(alerts);
 
-    return { message: "ok" };
+      return result;
+    } catch (e: unknown) {
+      logger.error("Error getting alerts: " + e);
+      throw e;
+    }
   })
   .post(
     "/",
     async ({ body }) => {
-      await db.insert(alerts).values(body);
+      try {
+        logger.info("Attempting POST new alert");
+        await db.insert(alerts).values(body);
 
-      return {
-        received: body,
-      };
+        return {
+          received: body,
+        };
+      } catch (e: unknown) {
+        logger.error("Error POST new alert: " + e);
+        throw e;
+      }
     },
     { body: AlertSchema },
+  )
+  .patch(
+    "/:id/status",
+    async ({ params, body }) => {
+      try {
+        logger.info("Attempting PATCH alert status...");
+
+        await db
+          .update(alerts)
+          .set({ status: body.status })
+          .where(eq(alerts.alert_id, params.id));
+
+        return { status: body.status };
+      } catch (e: unknown) {
+        logger.error("Error PATCH alert status: " + e);
+        throw e;
+      }
+    },
+    {
+      body: t.Object({
+        status: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/:id/assign",
+    async ({ params, body }) => {
+      logger.info("Attempting POST new alert assignment...");
+
+      try {
+        await db.insert(alert_assignments).values({
+          investigatorId: body.investigatorId,
+          alertId: params.id,
+        });
+
+        return { data: body };
+      } catch (e: unknown) {
+        logger.error("Error POST new alert assignment: " + e);
+        throw e;
+      }
+    },
+    {
+      body: t.Object({
+        investigatorId: t.String({ format: "uuid" }),
+      }),
+    },
   );
