@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { authGuard } from "./guards/auth.guard";
-import { alertRoutes } from "../../plugins/alerts.plugin";
+import { alertRoutes } from "./plugins/alerts.plugin";
 
 export const app = new Elysia()
   .use(authGuard)
@@ -13,3 +13,10 @@ export const app = new Elysia()
   })
   .use(alertRoutes)
   .listen(3001);
+
+console.log(
+  app.routes.map((r) => ({
+    method: r.method,
+    path: r.path,
+  })),
+);
