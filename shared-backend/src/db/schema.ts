@@ -77,7 +77,7 @@ export const investigators = cameraSchema.table("investigators", {
 export const alert_assignments = cameraSchema.table(
   "alert_assignments",
   {
-    investigatorId: uuid("id").references(() => investigators.id, {
+    investigatorId: uuid("investigator_id").references(() => investigators.id, {
       onDelete: "restrict",
     }),
     alertId: uuid("alert_id").references(() => alerts.alert_id, {

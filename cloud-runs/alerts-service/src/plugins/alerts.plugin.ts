@@ -1,7 +1,10 @@
 import Elysia, { t } from "elysia";
 import { AlertSchema } from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
-import { alerts } from "../../../../shared-backend/src/db/schema";
+import {
+  alert_assignments,
+  alerts,
+} from "../../../../shared-backend/src/db/schema";
 import { eq } from "drizzle-orm";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
@@ -34,6 +37,22 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     {
       body: t.Object({
         status: t.String(),
+      }),
+    },
+  )
+  .post(
+    "/:id/assign",
+    async ({ params, body }) => {
+      await db.insert(alert_assignments).values({
+        investigatorId: body.investigatorId,
+        alertId: params.id,
+      });
+
+      return { data: body };
+    },
+    {
+      body: t.Object({
+        investigatorId: t.String(),
       }),
     },
   );
