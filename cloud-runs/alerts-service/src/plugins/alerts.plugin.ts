@@ -1,14 +1,14 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { AlertSchema } from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
 import { alerts } from "../../../../shared-backend/src/db/schema";
+import { eq } from "drizzle-orm";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
-    //const result = await db.select().from(alerts);
-    console.log("e");
+    const result = await db.select().from(alerts);
 
-    return { message: "ok" };
+    return result;
   })
   .post(
     "/",
@@ -20,4 +20,20 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
       };
     },
     { body: AlertSchema },
+  )
+  .patch(
+    "/:id/status",
+    async ({ params, body }) => {
+      await db
+        .update(alerts)
+        .set({ status: body.status })
+        .where(eq(alerts.alert_id, params.id));
+
+      return { status: body.status };
+    },
+    {
+      body: t.Object({
+        status: t.String(),
+      }),
+    },
   );
