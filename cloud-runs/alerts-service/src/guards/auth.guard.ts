@@ -1,5 +1,6 @@
 import type Elysia from "elysia";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { UnauthorizedError } from "../errors/errors";
 
 const JWKS = createRemoteJWKSet(
   new URL(
@@ -12,7 +13,7 @@ export const authGuard = (app: Elysia) =>
     const authHeader = headers["authorization"];
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new Error("Unauthorized");
+      throw new UnauthorizedError("Unauthorized");
     }
 
     // continue
@@ -23,6 +24,6 @@ export const authGuard = (app: Elysia) =>
       const { payload } = await jwtVerify(token, JWKS);
       return { user: payload };
     } catch (error) {
-      throw new Error("Invalid or expired token");
+      throw new UnauthorizedError("Invalid or expired token");
     }
   });

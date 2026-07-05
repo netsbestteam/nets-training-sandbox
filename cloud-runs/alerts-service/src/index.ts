@@ -1,10 +1,22 @@
 import Elysia from "elysia";
 import { authGuard } from "./guards/auth.guard";
 import { alertRoutes } from "./plugins/alerts.plugin";
+import { UnauthorizedError } from "./errors/errors";
 
 export const app = new Elysia()
   .use(authGuard)
-  .onError(({ code, error }) => {
+  .error({ UnauthorizedError })
+  .onError(({ code, error, set }) => {
+    if (code == "UnauthorizedError") {
+      set.status = 401;
+
+      return {
+        status: "error",
+        type: "UNAUTHORIZED",
+        details: error.message,
+      };
+    }
+
     return {
       status: "error",
       type: "INTERNAL_SERVER_ERROR",
