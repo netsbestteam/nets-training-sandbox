@@ -1,5 +1,9 @@
 import Elysia, { t } from "elysia";
-import { AlertSchema } from "../../../../shared/src/schemas/management";
+import {
+  AlertAssignment,
+  AlertSchema,
+  UpdateAlertStatus,
+} from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
 import {
   alert_assignments,
@@ -55,9 +59,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
       }
     },
     {
-      body: t.Object({
-        status: t.String(),
-      }),
+      body: UpdateAlertStatus,
     },
   )
   .post(
@@ -78,8 +80,6 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
       }
     },
     {
-      body: t.Object({
-        investigatorId: t.String({ format: "uuid" }),
-      }),
+      body: AlertAssignment,
     },
   );
