@@ -26,10 +26,14 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
   })
   .post(
     "/",
-    async ({ body }) => {
+    async ({ body, server }) => {
       try {
         logger.info("Attempting POST new alert");
         await db.insert(alerts).values(body);
+
+        if (server) {
+          server.publish("all-alerts", JSON.stringify({ data: body }));
+        }
 
         return {
           received: body,

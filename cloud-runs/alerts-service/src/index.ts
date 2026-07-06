@@ -2,6 +2,7 @@ import Elysia from "elysia";
 import { authGuard } from "./guards/auth.guard";
 import { alertRoutes } from "./plugins/alerts.plugin";
 import { UnauthorizedError } from "./errors/errors";
+import { connection } from "./plugins/connection.plugin";
 
 export const app = new Elysia()
   .use(authGuard)
@@ -23,6 +24,7 @@ export const app = new Elysia()
       details: error,
     };
   })
+  .use(connection)
   .use(alertRoutes)
   .listen(3001);
 
