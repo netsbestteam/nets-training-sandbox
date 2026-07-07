@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  nats:
+    image: nats:2.11
+    container_name: nats
+    ports:
+      - "4222:4222" # Client connections
+      - "8222:8222" # Monitoring endpoint
+    command: ["-js", "-m", "8222"]
