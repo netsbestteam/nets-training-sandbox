@@ -11,6 +11,7 @@ import {
 } from "../../../../shared-backend/src/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../../../../shared-backend/src/logger";
+import { js } from "./nats/nats.plugin";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
@@ -33,6 +34,15 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
 
         if (server) {
           server.publish("all-alerts", JSON.stringify({ data: body }));
+
+          /*
+          await js.publish(
+            "events.alert.created",
+            JSON.stringify({
+              body,
+            }),
+          );
+          */
         }
 
         return {
