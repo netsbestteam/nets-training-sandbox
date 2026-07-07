@@ -4,7 +4,7 @@ import { alertRoutes } from "./plugins/alerts.plugin";
 import { UnauthorizedError } from "./errors/errors";
 import { connection } from "./plugins/connection.plugin";
 import { logger } from "../../../shared-backend/src/logger";
-import { setupJetStream } from "./plugins/nats/setup.plugin";
+import { setupJetStream } from "../../dispatcher-service/nats/setup.plugin";
 
 await setupJetStream();
 

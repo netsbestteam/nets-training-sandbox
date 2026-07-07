@@ -11,7 +11,9 @@ import {
 } from "../../../../shared-backend/src/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../../../../shared-backend/src/logger";
-import { js } from "./nats/nats.plugin";
+import { js } from "../../../dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "../../../../shared/src/events";
+import { JSONCodec } from "nats";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
@@ -30,16 +32,16 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     async ({ body, server }) => {
       try {
         logger.info("Attempting POST new alert");
-        await db.insert(alerts).values(body);
+        const id = await db
+          .insert(alerts)
+          .values(body)
+          .returning({ id: alerts.alert_id });
 
         if (server) {
           server.publish("all-alerts", JSON.stringify({ data: body }));
-
           await js.publish(
-            "events.alert.created",
-            JSON.stringify({
-              body,
-            }),
+            AlertEvents.New,
+            JSONCodec().encode({ alertId: id[0]?.id, body }),
           );
         }
 

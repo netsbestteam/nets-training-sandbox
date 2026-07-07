@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { startConsumer } from "./consumer";
-import { logger } from "../../../shared-backend/src/logger";
+import { logger } from "../../../../shared-backend/src/logger";
 
 await startConsumer();
 
