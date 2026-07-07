@@ -25,23 +25,19 @@ export async function startConsumer() {
       ack_policy: AckPolicy.Explicit,
       filter_subject: AlertEvents.New,
     });
-
     logger.info("Created durable consumer");
   }
 
   const consumer = await js.consumers.get(STREAM_NAME, CONSUMER_NAME);
-
   logger.info("Starting alerts consumer");
 
   const messages = await consumer.consume();
-
-  const RADIUS = 1000000;
+  const RADIUS_METERS = 1000000;
 
   for await (const msg of messages) {
     try {
       const data: Message = msg.json();
-      logger.info("Received alert event:");
-      logger.info(JSON.stringify(data));
+      logger.info(`Received alert event for ID: ${data.alertId}`);
 
       try {
         const nearbyCameras = await db
@@ -49,16 +45,15 @@ export async function startConsumer() {
           .from(cameras)
           .where(
             sql`ST_DWithin(
-              ST_SetSRID(ST_MakePoint(${data.body.location?.x}, ${data.body.location?.y}), 4326),
-              ${cameras.location},
-              ${RADIUS}
+              ST_SetSRID(ST_MakePoint(${data.body.location?.x}, ${data.body.location?.y}), 4326)::geography,
+              ${cameras.location}::geography,
+              ${RADIUS_METERS}
             )`,
           )
-          // Order by the calculated distance between the alert point and the camera
           .orderBy(
             sql`ST_Distance(
-              ST_SetSRID(ST_MakePoint(${data.body.location?.x}, ${data.body.location?.y}), 4326),
-              ${cameras.location}
+              ST_SetSRID(ST_MakePoint(${data.body.location?.x}, ${data.body.location?.y}), 4326)::geography,
+              ${cameras.location}::geography
             )`,
           )
           .limit(1);
@@ -77,16 +72,17 @@ export async function startConsumer() {
             nearbyCamera: nearestCamera,
           }),
         );
-        //console.log("alertId: " + data.alertId);
-        //console.log(nearbyCameras);
-        console.log(nearestCamera);
-      } catch (e: unknown) {
-        logger.error(e);
-      }
 
-      msg.ack();
-    } catch (err) {
-      logger.error("Failed processing message " + err);
+        msg.ack();
+      } catch (processingErr) {
+        logger.error(
+          `Failed processing database spatial queries: ${processingErr}`,
+        );
+        msg.nak();
+      }
+    } catch (parseErr) {
+      logger.error("Failed parsing message JSON structure: " + parseErr);
+      msg.term();
     }
   }
 }
