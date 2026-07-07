@@ -7,7 +7,6 @@ const CONSUMER_NAME = "alerts-consumer";
 const SUBJECT = "events.alert.created";
 
 export async function startConsumer() {
-  // Create the durable consumer if it does not exist
   try {
     await jsm.consumers.info(STREAM_NAME, CONSUMER_NAME);
     logger.info("Durable consumer already exists");
@@ -37,9 +36,6 @@ export async function startConsumer() {
 
         logger.info("Received alert event:");
         logger.info(data);
-
-        // TODO:
-        // handle the alert event here
 
         msg.ack();
       } catch (err) {

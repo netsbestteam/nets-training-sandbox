@@ -35,14 +35,12 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         if (server) {
           server.publish("all-alerts", JSON.stringify({ data: body }));
 
-          /*
           await js.publish(
             "events.alert.created",
             JSON.stringify({
               body,
             }),
           );
-          */
         }
 
         return {
