@@ -1,27 +1,28 @@
 import { AckPolicy, JSONCodec } from "nats";
-import { jsm } from "./nats";
 import { logger } from "../../../../shared-backend/src/logger";
 import { AlertEvents } from "../../../../shared/src/events";
 import type { AlertInput } from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
 import { alerts, cameras } from "../../../../shared-backend/src/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { js } from "../../nats/nats.plugin";
+import { js, streamManager } from "../../nats/nats.plugin";
 
 const STREAM_NAME = "ALERTS";
 const CONSUMER_NAME = "alerts-consumer";
 
+// Message that we consume from the channel
 export interface Message {
   alertId: string;
   body: AlertInput;
 }
 
 export async function startConsumer() {
+  // Check if consumer already exists
   try {
-    await jsm.consumers.info(STREAM_NAME, CONSUMER_NAME);
+    await streamManager.consumers.info(STREAM_NAME, CONSUMER_NAME);
     logger.info("Durable consumer already exists");
   } catch {
-    await jsm.consumers.add(STREAM_NAME, {
+    await streamManager.consumers.add(STREAM_NAME, {
       durable_name: CONSUMER_NAME,
       ack_policy: AckPolicy.Explicit,
       filter_subject: AlertEvents.New,
@@ -41,6 +42,7 @@ export async function startConsumer() {
       logger.info(`Received alert event for ID: ${data.alertId}`);
 
       try {
+        // Get nearest camera
         const nearbyCameras = await db
           .select()
           .from(cameras)
@@ -66,6 +68,7 @@ export async function startConsumer() {
           .set({ camera_id: nearestCamera?.camera_id })
           .where(eq(alerts.alert_id, data.alertId));
 
+        // Publish nearest camera event
         await js.publish(
           AlertEvents.CamerasFound,
           JSONCodec().encode({

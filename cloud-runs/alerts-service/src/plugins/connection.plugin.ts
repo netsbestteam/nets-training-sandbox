@@ -2,8 +2,10 @@ import Elysia from "elysia";
 import { logger } from "../../../../shared-backend/src/logger";
 import { AckPolicy, JSONCodec } from "nats";
 import { AlertEvents } from "../../../../shared/src/events";
-import { jsm } from "../../../dispatcher-service/alerts-consumer/src/nats";
-import { js } from "../../../dispatcher-service/nats/nats.plugin";
+import {
+  js,
+  streamManager,
+} from "../../../dispatcher-service/nats/nats.plugin";
 import type { Server } from "bun";
 
 const STREAM_NAME = "ALERTS";
@@ -26,10 +28,10 @@ export const connection = new Elysia().ws("/socket", {
 
 export async function startWebSocketConsumer(server: Server<any> | null) {
   try {
-    await jsm.consumers.info(STREAM_NAME, WS_CONSUMER_NAME);
+    await streamManager.consumers.info(STREAM_NAME, WS_CONSUMER_NAME);
     logger.info("WS Durable consumer already exists");
   } catch {
-    await jsm.consumers.add(STREAM_NAME, {
+    await streamManager.consumers.add(STREAM_NAME, {
       durable_name: WS_CONSUMER_NAME,
       ack_policy: AckPolicy.Explicit,
       filter_subjects: [AlertEvents.Assigned, AlertEvents.CamerasFound],
