@@ -2,7 +2,10 @@ import Elysia from "elysia";
 import { authGuard } from "./guards/auth.guard";
 import { alertRoutes } from "./plugins/alerts.plugin";
 import { UnauthorizedError } from "./errors/errors";
-import { connection } from "./plugins/connection.plugin";
+import {
+  connection,
+  startWebSocketConsumer,
+} from "./plugins/connection.plugin";
 import { logger } from "../../../shared-backend/src/logger";
 import { setupJetStream } from "../../dispatcher-service/nats/setup.plugin";
 
@@ -33,3 +36,5 @@ export const app = new Elysia()
   .use(connection)
   .use(alertRoutes)
   .listen(process.env.ALERT_SERVICE_PORT!);
+
+await startWebSocketConsumer(app.server);

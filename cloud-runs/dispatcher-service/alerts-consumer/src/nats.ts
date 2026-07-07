@@ -4,5 +4,4 @@ export const nc = await connect({
   servers: "nats://localhost:4222",
 });
 
-export const js = nc.jetstream();
 export const jsm = await nc.jetstreamManager();

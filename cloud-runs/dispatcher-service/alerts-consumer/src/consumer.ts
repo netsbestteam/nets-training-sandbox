@@ -1,11 +1,12 @@
 import { AckPolicy, JSONCodec } from "nats";
-import { js, jsm } from "./nats";
+import { jsm } from "./nats";
 import { logger } from "../../../../shared-backend/src/logger";
 import { AlertEvents } from "../../../../shared/src/events";
 import type { AlertInput } from "../../../../shared/src/schemas/management";
 import { db } from "../../../../shared-backend/src/db";
 import { alerts, cameras } from "../../../../shared-backend/src/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { js } from "../../nats/nats.plugin";
 
 const STREAM_NAME = "ALERTS";
 const CONSUMER_NAME = "alerts-consumer";
