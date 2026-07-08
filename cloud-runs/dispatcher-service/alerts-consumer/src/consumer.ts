@@ -69,6 +69,8 @@ export async function startConsumer() {
           .set({ camera_id: nearestCamera?.camera_id })
           .where(eq(alerts.alert_id, data.alertId));
 
+        logger.info("nearest camera id: " + nearestCamera?.camera_id);
+
         // Publish nearest camera event
         await js.publish(
           AlertEvents.CamerasFound,
