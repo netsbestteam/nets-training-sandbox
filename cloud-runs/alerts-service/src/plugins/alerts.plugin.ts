@@ -11,14 +11,15 @@ import {
 } from "../../../../shared-backend/src/db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../../../../shared-backend/src/logger";
+import { js } from "../../../dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "../../../../shared/src/events";
+import { JSONCodec } from "nats";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
     try {
       logger.info("Getting alerts");
-      const result = await db.select().from(alerts);
-
-      return result;
+      return await db.select().from(alerts);
     } catch (e: unknown) {
       logger.error("Error getting alerts: " + e);
       throw e;
@@ -29,15 +30,28 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     async ({ body, server }) => {
       try {
         logger.info("Attempting POST new alert");
-        await db.insert(alerts).values(body);
+        const inserted = await db
+          .insert(alerts)
+          .values(body)
+          .returning({ id: alerts.alert_id });
+
+        // Retreive alert id if inserted successfully
+        const newAlertId = inserted[0]?.id;
+        if (!newAlertId) {
+          throw new Error("Failed to insert alert into database");
+        }
 
         if (server) {
           server.publish("all-alerts", JSON.stringify({ data: body }));
+
+          // Publish to jetstream
+          await js.publish(
+            AlertEvents.New,
+            JSONCodec().encode({ alertId: newAlertId, body }),
+          );
         }
 
-        return {
-          received: body,
-        };
+        return { received: body, alertId: newAlertId };
       } catch (e: unknown) {
         logger.error("Error POST new alert: " + e);
         throw e;
@@ -62,20 +76,27 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         throw e;
       }
     },
-    {
-      body: UpdateAlertStatus,
-    },
+    { body: UpdateAlertStatus },
   )
   .post(
     "/:id/assign",
     async ({ params, body }) => {
-      logger.info("Attempting POST new alert assignment...");
-
       try {
+        logger.info("Attempting POST new alert assignment...");
+
         await db.insert(alert_assignments).values({
           investigatorId: body.investigatorId,
           alertId: params.id,
         });
+
+        // Publish event to jetstream
+        await js.publish(
+          AlertEvents.Assigned,
+          JSONCodec().encode({
+            investigatorId: body.investigatorId,
+            alertId: params.id,
+          }),
+        );
 
         return { data: body };
       } catch (e: unknown) {
@@ -83,7 +104,5 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         throw e;
       }
     },
-    {
-      body: AlertAssignment,
-    },
+    { body: AlertAssignment },
   );

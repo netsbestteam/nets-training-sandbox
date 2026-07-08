@@ -13,7 +13,7 @@ export const authGuard = (app: Elysia) =>
     const authHeader = headers["authorization"];
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedError("Unauthorized");
+      throw new UnauthorizedError();
     }
 
     // continue

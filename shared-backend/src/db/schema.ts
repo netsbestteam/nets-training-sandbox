@@ -17,9 +17,9 @@ export const cameras = cameraSchema.table(
   "cameras",
   {
     camera_id: uuid("camera_id").primaryKey().defaultRandom(),
-    camera_name: text().notNull(),
+    name: text().notNull(),
     status: text().notNull(),
-    installationDate: timestamp("installation_date", { withTimezone: true })
+    creationDate: timestamp("creation_date", { withTimezone: true })
       .notNull()
       .defaultNow(),
     location: geometry("location", {
