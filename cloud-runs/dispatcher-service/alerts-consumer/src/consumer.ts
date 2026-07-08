@@ -42,7 +42,7 @@ export async function startConsumer() {
       logger.info(`Received alert event for ID: ${data.alertId}`);
 
       try {
-        // Get nearest camera
+        // Get nearest camera query
         const nearbyCameras = await db
           .select()
           .from(cameras)
@@ -63,6 +63,7 @@ export async function startConsumer() {
 
         const nearestCamera = nearbyCameras[0] || null;
 
+        // Update the new alert with nearest camera
         await db
           .update(alerts)
           .set({ camera_id: nearestCamera?.camera_id })

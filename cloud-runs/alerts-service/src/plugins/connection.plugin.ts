@@ -9,7 +9,7 @@ import {
 import type { Server } from "bun";
 
 const STREAM_NAME = "ALERTS";
-const WS_CONSUMER_NAME = "alerts-ws-relay-consumer";
+const WS_CONSUMER_NAME = "alerts-ws-consumer";
 
 export const connection = new Elysia().ws("/socket", {
   open(ws) {
@@ -27,6 +27,7 @@ export const connection = new Elysia().ws("/socket", {
 });
 
 export async function startWebSocketConsumer(server: Server<any> | null) {
+  // Check if consumer already exists
   try {
     await streamManager.consumers.info(STREAM_NAME, WS_CONSUMER_NAME);
     logger.info("WS Durable consumer already exists");
@@ -40,9 +41,10 @@ export async function startWebSocketConsumer(server: Server<any> | null) {
   }
 
   const consumer = await js.consumers.get(STREAM_NAME, WS_CONSUMER_NAME);
-  const messages = await consumer.consume();
+  const messages = await consumer.consume(); // Consume messages
   const sc = JSONCodec();
 
+  // Async block for processing messages
   (async () => {
     logger.info("Starting nats websocket connection");
     for await (const msg of messages) {
@@ -50,7 +52,7 @@ export async function startWebSocketConsumer(server: Server<any> | null) {
         const subject = msg.subject;
         const payload = sc.decode(msg.data);
 
-        logger.info(`Relaying NATS event [${subject}] over ws 'all-alerts'`);
+        logger.info(`broadcasting NATS event ${subject} over ws 'all-alerts'`);
 
         server?.publish(
           "all-alerts",

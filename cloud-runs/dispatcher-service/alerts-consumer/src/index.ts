@@ -4,6 +4,8 @@ import { logger } from "../../../../shared-backend/src/logger";
 
 await startConsumer();
 
-new Elysia().listen(3002);
+new Elysia().listen(process.env.ALERT_CONSUMER_PORT!);
 
-logger.info("Alerts consumer running on port 3002");
+logger.info(
+  `Alerts consumer running on port ${process.env.ALERT_CONSUMER_PORT}`,
+);

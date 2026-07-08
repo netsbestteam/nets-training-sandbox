@@ -35,6 +35,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           .values(body)
           .returning({ id: alerts.alert_id });
 
+        // Retreive alert id if inserted successfully
         const newAlertId = inserted[0]?.id;
         if (!newAlertId) {
           throw new Error("Failed to insert alert into database");
@@ -42,6 +43,8 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
 
         if (server) {
           server.publish("all-alerts", JSON.stringify({ data: body }));
+
+          // Publish to jetstream
           await js.publish(
             AlertEvents.New,
             JSONCodec().encode({ alertId: newAlertId, body }),
@@ -86,6 +89,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           alertId: params.id,
         });
 
+        // Publish event to jetstream
         await js.publish(
           AlertEvents.Assigned,
           JSONCodec().encode({
