@@ -146,6 +146,41 @@ const cameraData = [
     },
     direction: 15,
   },
+  // 6: Location fields invalid (x is string instead of number)
+  {
+    name: "camera",
+    status: "active",
+    location: { x: "invalid-x", y: 33 },
+    direction: 15,
+  },
+  // 7: Direction is valid lower boundary (0)
+  {
+    name: "camera",
+    status: "active",
+    direction: 0,
+  },
+  // 8: Direction is valid upper boundary (360)
+  {
+    name: "camera",
+    status: "active",
+    direction: 360,
+  },
+  // 9: Direction is invalid (below 0)
+  {
+    name: "camera",
+    status: "active",
+    direction: -1,
+  },
+  // 10: Direction is invalid (above 360)
+  {
+    name: "camera",
+    status: "active",
+    direction: 361,
+  },
+  // 11: Missing required fields (missing name completely)
+  {
+    status: "active",
+  },
 ];
 
 describe("management zod schema", () => {
@@ -246,22 +281,19 @@ describe("management zod schema", () => {
   });
 
   describe("camera schema", () => {
-    describe("check camera name valididy", () => {
+    describe("check camera name validity", () => {
       test("pass if name is a string", () => {
         const result = CameraSchema.safeParse(cameraData[0]);
-
         expect(result.success).toBe(true);
       });
 
       test("fail if name is not a string", () => {
         const result = CameraSchema.safeParse(cameraData[1]);
-
         expect(result.success).toBe(false);
       });
 
       test("check if name is not null", () => {
         const result = CameraSchema.safeParse(cameraData[2]);
-
         expect(result.success).toBe(false);
       });
     });
@@ -269,20 +301,63 @@ describe("management zod schema", () => {
     describe("check camera status", () => {
       test("fail if status is not a string", () => {
         const result = CameraSchema.safeParse(cameraData[3]);
-
         expect(result.success).toBe(false);
       });
 
       test("fail if status is not valid (active, inactive, fault)", () => {
         const result = CameraSchema.safeParse(cameraData[4]);
-
         expect(result.success).toBe(false);
       });
 
       test("pass if status is valid", () => {
         const result = CameraSchema.safeParse(cameraData[5]);
-
         expect(result.success).toBe(true);
+      });
+    });
+
+    describe("check camera location", () => {
+      test("pass if location is omitted entirely (optional)", () => {
+        // Index 7 does not have a location key passed
+        const result = CameraSchema.safeParse(cameraData[7]);
+        expect(result.success).toBe(true);
+      });
+
+      test("fail if inner location fields are invalid types", () => {
+        const result = CameraSchema.safeParse(cameraData[6]);
+        expect(result.success).toBe(false);
+        expect(result.error?.format().location).toBeDefined();
+      });
+    });
+
+    describe("check camera direction", () => {
+      test("pass at minimum boundary (0)", () => {
+        const result = CameraSchema.safeParse(cameraData[7]);
+        expect(result.success).toBe(true);
+      });
+
+      test("pass at maximum boundary (360)", () => {
+        const result = CameraSchema.safeParse(cameraData[8]);
+        expect(result.success).toBe(true);
+      });
+
+      test("fail if direction is less than 0", () => {
+        const result = CameraSchema.safeParse(cameraData[9]);
+        expect(result.success).toBe(false);
+        expect(result.error?.format()).toHaveProperty("direction");
+      });
+
+      test("fail if direction is more than 360", () => {
+        const result = CameraSchema.safeParse(cameraData[10]);
+        expect(result.success).toBe(false);
+        expect(result.error?.format()).toHaveProperty("direction");
+      });
+    });
+
+    describe("check missing required fields", () => {
+      test("fail if required fields are absent", () => {
+        const result = CameraSchema.safeParse(cameraData[11]);
+        expect(result.success).toBe(false);
+        expect(result.error?.format()).toHaveProperty("name");
       });
     });
   });
