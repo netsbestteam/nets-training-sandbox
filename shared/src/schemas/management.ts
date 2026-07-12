@@ -28,7 +28,7 @@ export const CameraSchema = z.object({
 });
 
 export const UpdateAlertStatus = z.object({
-  status: z.string(),
+  status: z.enum(["open", "closed"]),
 });
 
 export const AlertAssignment = z.object({

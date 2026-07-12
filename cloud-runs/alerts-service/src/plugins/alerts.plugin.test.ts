@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from "vitest";
 import { app } from "../index";
 
-// mock jose library globally for this test file
+// Mock the 'jose' library globally for this test file
 vi.mock("jose", () => {
   return {
     createRemoteJWKSet: vi.fn(),
@@ -16,14 +16,14 @@ vi.mock("jose", () => {
   };
 });
 
-// mock nats jetstream so we dont need a real running nats server
+// mock nats jetstream instead of a real running nats server
 vi.mock("../../../dispatcher-service/nats/nats.plugin", () => ({
   js: {
     publish: vi.fn().mockResolvedValue({ sequence: 1 }),
   },
 }));
 
-// mock the db connection with support for chaining (.insert().values().returning())
+// mock the db connection
 vi.mock("../../../../shared-backend/src/db", () => ({
   db: {
     select: vi.fn().mockReturnThis(),
@@ -33,6 +33,10 @@ vi.mock("../../../../shared-backend/src/db", () => ({
     insert: vi.fn().mockReturnValue({
       values: vi.fn().mockReturnThis(),
       returning: vi.fn().mockResolvedValue([{ id: "new-alert-uuid" }]),
+    }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnThis(),
+      where: vi.fn().mockResolvedValue({ affectedRows: 1 }),
     }),
   },
 }));
@@ -73,7 +77,7 @@ describe("check alerts API with auth mocking", () => {
       const response = await app.handle(
         new Request("http://localhost/alerts", {
           headers: {
-            Authorization: "Bearer auth-token",
+            Authorization: "Bearer complete-garbage-token",
           },
         }),
       );
@@ -92,7 +96,7 @@ describe("check alerts API with auth mocking", () => {
       },
     };
 
-    test("POST /alerts - pass create new alert with valid data and auth token", async () => {
+    test("POST /alerts - create new alert with valid data and auth token", async () => {
       const response = await app.handle(
         new Request("http://localhost/alerts", {
           method: "POST",
@@ -115,10 +119,10 @@ describe("check alerts API with auth mocking", () => {
       expect(body.received.severity).toBe(3);
     });
 
-    test("POST /alerts - fail with 400 when body input violates validation schema", async () => {
+    test("POST /alerts - fail with 400 when body is invalid", async () => {
       const invalidAlertPayload = {
         ...validAlertPayload,
-        severity: 9,
+        severity: 9, // Invalid (only 1-5 allowed)
       };
 
       const response = await app.handle(
@@ -135,7 +139,7 @@ describe("check alerts API with auth mocking", () => {
       expect(response.status).toBe(400);
     });
 
-    test("POST /alerts - fail with 401 if attempting to post without auth token", async () => {
+    test("POST /alerts - fail with 401 without auth token", async () => {
       const response = await app.handle(
         new Request("http://localhost/alerts", {
           method: "POST",
@@ -147,6 +151,62 @@ describe("check alerts API with auth mocking", () => {
       );
 
       expect(response.status).toBe(401);
+    });
+  });
+
+  describe("test PATCH alert status endpoint", () => {
+    test("PATCH /alerts/:id/status - successfully update status", async () => {
+      const response = await app.handle(
+        new Request("http://localhost/alerts/111-222-333/status", {
+          method: "PATCH",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "closed" }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { status: string };
+      expect(body.status).toBe("closed");
+    });
+
+    test("PATCH /alerts/:id/status - fail with 400 with wrong status type", async () => {
+      const response = await app.handle(
+        new Request("http://localhost/alerts/111-222-333/status", {
+          method: "PATCH",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "invalid-status-string" }),
+        }),
+      );
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe("test POST alert assignment endpoint", () => {
+    test("POST /alerts/:id/assign - successfully assign investigator", async () => {
+      const response = await app.handle(
+        new Request("http://localhost/alerts/111-222-333/assign", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            investigatorId: "123e4567-e89b-12d3-a456-426614174000",
+            investigator_id: "123e4567-e89b-12d3-a456-426614174000",
+          }),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as any;
+      expect(body).toBeDefined();
     });
   });
 });
