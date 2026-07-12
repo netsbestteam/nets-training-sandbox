@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from "vitest";
 import { app } from "../index";
 
-// Define globally for this file so all test suites can see it
+// Define globally for this file
 const validAlertPayload = {
   severity: 3,
   status: "open",
@@ -123,7 +123,7 @@ describe("check alerts API with auth mocking", () => {
     test("POST /alerts - fail with 400 when body is invalid", async () => {
       const invalidAlertPayload = {
         ...validAlertPayload,
-        severity: 9, // Invalid (only 1-5 allowed)
+        severity: 9, // Invalid (only 1-5)
       };
 
       const response = await app.handle(
