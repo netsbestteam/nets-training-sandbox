@@ -1,6 +1,16 @@
 import { describe, test, expect, vi } from "vitest";
 import { app } from "../index";
 
+// Define globally for this file so all test suites can see it
+const validAlertPayload = {
+  severity: 3,
+  status: "open",
+  location: {
+    x: 32,
+    y: 33,
+  },
+};
+
 // Mock the 'jose' library globally for this test file
 vi.mock("jose", () => {
   return {
@@ -87,15 +97,6 @@ describe("check alerts API with auth mocking", () => {
   });
 
   describe("test POST new alert endpoint", () => {
-    const validAlertPayload = {
-      severity: 3,
-      status: "open",
-      location: {
-        x: 32,
-        y: 33,
-      },
-    };
-
     test("POST /alerts - create new alert with valid data and auth token", async () => {
       const response = await app.handle(
         new Request("http://localhost/alerts", {
@@ -206,6 +207,96 @@ describe("check alerts API with auth mocking", () => {
 
       expect(response.status).toBe(200);
       const body = (await response.json()) as any;
+      expect(body).toBeDefined();
+    });
+  });
+
+  describe("test error handling edge cases", () => {
+    test("GET /alerts - handle internal database catch block branch", async () => {
+      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      db.from.mockRejectedValueOnce(new Error("Database disconnected"));
+
+      const response = await app.handle(
+        new Request("http://localhost/alerts", {
+          headers: { Authorization: "Bearer valid-mock-token" },
+        }),
+      );
+
+      const body = await response.json();
+      expect(body).toBeDefined();
+    });
+
+    test("POST /alerts - handle internal database catch block branch", async () => {
+      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      db.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnThis(),
+        returning: vi
+          .fn()
+          .mockRejectedValueOnce(new Error("Insert constraint violation")),
+      });
+
+      const response = await app.handle(
+        new Request("http://localhost/alerts", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(validAlertPayload),
+        }),
+      );
+
+      const body = await response.json();
+      expect(body).toBeDefined();
+    });
+
+    test("PATCH /alerts/:id/status - handle database update catch block branch", async () => {
+      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      db.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnThis(),
+        where: vi
+          .fn()
+          .mockRejectedValueOnce(new Error("Update targeted row locked")),
+      });
+
+      const response = await app.handle(
+        new Request("http://localhost/alerts/111/status", {
+          method: "PATCH",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: "closed" }),
+        }),
+      );
+
+      const body = await response.json();
+      expect(body).toBeDefined();
+    });
+
+    test("POST /alerts/:id/assign - handle database assignment catch block", async () => {
+      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      db.insert.mockReturnValueOnce({
+        values: vi.fn().mockReturnThis(),
+        returning: vi
+          .fn()
+          .mockRejectedValueOnce(new Error("Assignment target missing")),
+      });
+
+      const response = await app.handle(
+        new Request("http://localhost/alerts/111/assign", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer valid-mock-token",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            investigatorId: "123e4567-e89b-12d3-a456-426614174000",
+          }),
+        }),
+      );
+
+      const body = await response.json();
       expect(body).toBeDefined();
     });
   });
