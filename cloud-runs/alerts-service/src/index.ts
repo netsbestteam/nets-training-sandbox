@@ -15,10 +15,9 @@ export const app = new Elysia()
   .use(authGuard)
   .error({ UnauthorizedError })
   .onError(({ code, error, set }) => {
-    if (code == "UnauthorizedError") {
+    if (code === "UnauthorizedError") {
       logger.error("Unauthorized access");
       set.status = 401;
-
       return {
         status: "error",
         type: "UNAUTHORIZED",
@@ -26,7 +25,18 @@ export const app = new Elysia()
       };
     }
 
+    if (code === "VALIDATION") {
+      logger.error("Validation Error: " + error.message);
+      set.status = 400;
+      return {
+        status: "error",
+        type: "VALIDATION_ERROR",
+        details: error.message,
+      };
+    }
+
     logger.error("Error: " + error);
+    set.status = 500;
     return {
       status: "error",
       type: "INTERNAL_SERVER_ERROR",
