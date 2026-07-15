@@ -1,18 +1,32 @@
 {
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "latest",
     "@types/node": "^26.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "prettier": "3.9.3",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "@types/bun": "latest"
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.10"
   },
   "name": "nets-monorepo",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
   "dependencies": {
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "elysia": "^1.4.29",
+    "jose": "^6.2.3",
+    "nats": "^2.29.3",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
     "zod": "^4.4.3"

@@ -5,19 +5,39 @@ export const LocationSchema = z.object({
   y: z.number(),
 });
 
+export const MapBoundsSchema = z.object({
+  north: z.number(),
+  south: z.number(),
+  east: z.number(),
+  west: z.number(),
+});
+
 export const AlertSchema = z.object({
   severity: z.number().gte(1).lte(5),
-  status: z.string(),
+  status: z.enum(["open", "closed"]),
+  type: z.string().optional(),
   location: LocationSchema.optional(),
+  camera_id: z.uuid().optional(),
 });
 
 export const CameraSchema = z.object({
   name: z.string(),
   status: z.enum(["active", "inactive", "fault"]),
-  location: LocationSchema,
+  location: LocationSchema.optional(),
   direction: z.number().gte(0).lte(360).optional(),
+});
+
+export const UpdateAlertStatus = z.object({
+  status: z.enum(["open", "closed"]),
+});
+
+export const AlertAssignment = z.object({
+  investigatorId: z.uuid(),
 });
 
 export type AlertInput = z.infer<typeof AlertSchema>;
 export type CameraInput = z.infer<typeof CameraSchema>;
 export type LocationInput = z.infer<typeof LocationSchema>;
+export type MapBoundsInput = z.infer<typeof MapBoundsSchema>;
+export type UpdateAlertStatusInput = z.infer<typeof UpdateAlertStatus>;
+export type AlertAssignmentInput = z.infer<typeof AlertAssignment>;
