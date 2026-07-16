@@ -7,8 +7,6 @@
 	<div
 		class="w-full max-w-md space-y-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-center shadow-2xl"
 	>
-		<h1 class="text-2xl font-bold">כניסה למערכת</h1>
-
 		{#if data.error}
 			<div class="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-400">
 				{data.error}
@@ -20,7 +18,7 @@
 			href={data.keycloakLoginUrl}
 			class="block w-full rounded-lg bg-red-600 px-4 py-3 text-center font-semibold text-white transition hover:bg-red-700"
 		>
-			התחבר דרך Keycloak
+			Login with Keycloak
 		</a>
 	</div>
 </div>
