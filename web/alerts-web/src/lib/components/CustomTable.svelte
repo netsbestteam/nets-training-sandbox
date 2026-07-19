@@ -40,22 +40,16 @@
 		}
 	});
 
-	// map the incoming columns to enable sorting rules
 	$effect.pre(() => {
-		const strictColumns = columns.map((col) => ({
+		const processedColumns = columns.map((col) => ({
 			...col,
-			enableSorting:
-				col.id === 'date' ||
-				(col as any).accessorKey === 'alert_time' ||
-				col.id === 'severity' ||
-				(col as any).accessorKey === 'severity' ||
-				(col as any).accessorKey == 'status'
+			enableSorting: col.enableSorting === true ? true : false
 		}));
 
 		table.setOptions((prev) => ({
 			...prev,
 			data,
-			columns: strictColumns,
+			columns: processedColumns,
 			state: {
 				...prev.state,
 				pagination,
