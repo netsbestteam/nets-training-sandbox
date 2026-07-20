@@ -3,6 +3,8 @@
 	import CustomTable from '$lib/components/CustomTable.svelte';
 	import Map from '$lib/components/Map.svelte';
 	import { columns, type Alert } from '$lib/components/TableColumns/AlertsColumns';
+	import Card from '$lib/components/Card.svelte';
+	import { closedStyles, criticalStyles, openStyles } from '$lib/styles/CardStyles';
 
 	let { data }: { data: PageData } = $props();
 
@@ -78,38 +80,29 @@
 	</div>
 
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-		<button
+		<Card
+			label="Open Alerts"
+			count={openAlertsCount()}
+			isActive={activeFilter === 'open'}
+			style={openStyles}
 			onclick={() => toggleFilter('open')}
-			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
-                {activeFilter === 'open'
-				? 'border-emerald-500/40 bg-emerald-950/10 shadow-lg ring-1 shadow-emerald-950/20 ring-emerald-500/20'
-				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
-		>
-			<p class="text-xs font-medium tracking-wider text-zinc-400 uppercase">Open Alerts</p>
-			<p class="mt-2 text-3xl font-bold text-white">{openAlertsCount()}</p>
-		</button>
+		/>
 
-		<button
+		<Card
+			label="Closed Alerts"
+			count={closedAlertsCount()}
+			isActive={activeFilter === 'closed'}
+			style={closedStyles}
 			onclick={() => toggleFilter('closed')}
-			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
-                {activeFilter === 'closed'
-				? 'border-zinc-500/40 bg-zinc-800/20 shadow-lg ring-1 ring-zinc-500/20'
-				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
-		>
-			<p class="text-xs font-medium tracking-wider text-zinc-400 uppercase">Closed Alerts</p>
-			<p class="mt-2 text-3xl font-bold text-zinc-300">{closedAlertsCount()}</p>
-		</button>
+		/>
 
-		<button
+		<Card
+			label="Critical Alerts"
+			count={criticalAlertsCount()}
+			isActive={activeFilter === 'critical'}
+			style={criticalStyles}
 			onclick={() => toggleFilter('critical')}
-			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
-                {activeFilter === 'critical'
-				? 'border-red-500/40 bg-red-950/20 shadow-lg ring-1 shadow-red-950/20 ring-red-500/20'
-				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
-		>
-			<p class="text-xs font-medium tracking-wider text-red-400/80 uppercase">Critical Alerts</p>
-			<p class="mt-2 text-3xl font-bold text-red-400">{criticalAlertsCount()}</p>
-		</button>
+		/>
 	</div>
 
 	<div class="w-full">

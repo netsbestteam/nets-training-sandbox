@@ -61,7 +61,6 @@
                 <div style="color: #18181b; font-family: sans-serif; font-size: 12px; line-height: 1.4;">
                     <strong style="font-size: 13px;">Camera ID:</strong> ${alert.camera_id}<br/>
                     <strong>Severity:</strong> ${alert.severity}<br/>
-                    <strong>Status:</strong> <span style="text-transform: capitalize;">${alert.status}</span>
                 </div>
             `);
 
