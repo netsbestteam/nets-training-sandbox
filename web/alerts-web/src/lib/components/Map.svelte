@@ -5,77 +5,59 @@
 
 	let { alerts }: { alerts: Alert[] } = $props();
 
-	let mapElement = $state<HTMLDivElement | undefined>(undefined);
-	let map = $state<any>(null);
-	let markerLayer = $state<any>(null);
-	let L = $state<typeof LeafletNamespace | null>(null);
+	let mapElement = $state<HTMLDivElement>();
+	let markerLayer: any;
+	let L = $state<typeof LeafletNamespace>();
 
 	onMount(async () => {
 		if (!mapElement) return;
-		const el = mapElement;
 
 		L = await import('leaflet');
 
-		map = L.map(el).setView([31.4, 35.0], 8);
+		const map = L.map(mapElement).setView([31.4, 35.0], 8);
 
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-			attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+			attribution: '&copy; OpenStreetMap &copy; CARTO'
 		}).addTo(map);
 
 		markerLayer = L.layerGroup().addTo(map);
 	});
 
-	function getSeverityColor(severity: number): string {
-		if (severity === 5) return '#ef4444';
-		if (severity === 3 || severity === 4) return '#f97316';
-		if (severity === 2) return '#3b82f6';
-		return '#10b981';
-	}
+	const getSeverityColor = (sev: number) =>
+		['#10b981', '#10b981', '#3b82f6', '#f97316', '#f97316', '#ef4444'][sev] || '#10b981';
 
 	$effect(() => {
-		const currentAlerts = alerts;
 		const currentLayer = markerLayer;
 		const leaflet = L;
 
 		if (!currentLayer || !leaflet) return;
-
 		currentLayer.clearLayers();
 
-		currentAlerts.forEach((alert) => {
-			const lat = alert.location?.x;
-			const lng = alert.location?.y;
+		alerts.forEach(({ location, camera_id, severity, status }) => {
+			if (typeof location?.x !== 'number' || typeof location?.y !== 'number') return;
 
-			if (typeof lat !== 'number' || typeof lng !== 'number') return;
-
-			const color = getSeverityColor(alert.severity);
-
-			const marker = leaflet.circleMarker([lng, lat], {
+			const marker = leaflet!.circleMarker([location.y, location.x], {
 				radius: 8,
-				fillColor: color,
+				fillColor: getSeverityColor(severity),
 				color: '#ffffff',
 				weight: 1.5,
 				fillOpacity: 0.8
-			});
-
-			marker.bindPopup(`
+			}).bindPopup(`
                 <div style="color: #18181b; font-family: sans-serif; font-size: 12px; line-height: 1.4;">
-                    <strong style="font-size: 13px;">Camera ID:</strong> ${alert.camera_id}<br/>
-                    <strong>Severity:</strong> ${alert.severity}<br/>
+                    <strong style="font-size: 13px;">Camera ID:</strong> ${camera_id}<br/>
+                    <strong>Severity:</strong> ${severity}<br/>
+                    <strong style="text-transform: capitalize;">Status:</strong> ${status}<br/>
+                    <strong>Location:</strong> ${location.x.toFixed(4)}, ${location.y.toFixed(4)}
                 </div>
             `);
 
-			currentLayer.addLayer(marker);
+			markerLayer.addLayer(marker);
 		});
 	});
 </script>
 
 <svelte:head>
-	<link
-		rel="stylesheet"
-		href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-		crossorigin=""
-	/>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </svelte:head>
 
 <div

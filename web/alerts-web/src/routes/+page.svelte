@@ -11,64 +11,60 @@
 	let activeFilter = $state<string | null>(null);
 	let searchQuery = $state('');
 
-	let alertsData = $derived(() => {
+	let alertsData = $derived.by(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
+		const query = searchQuery.trim().toLowerCase();
 
-		const filters = [
-			(alerts: Alert[]) => {
-				if (!activeFilter) return alerts;
-				if (activeFilter === 'open')
-					return alerts.filter((a) => a.status === 'active' || a.status === 'open');
-				if (activeFilter === 'closed')
-					return alerts.filter((a) => a.status === 'inactive' || a.status === 'closed');
-				if (activeFilter === 'critical') return alerts.filter((a) => a.severity === 5);
-				return alerts;
-			},
+		let filtered = rawAlerts;
+		if (activeFilter === 'open') {
+			filtered = filtered.filter((a) => a.status === 'active' || a.status === 'open');
+		} else if (activeFilter === 'closed') {
+			filtered = filtered.filter((a) => a.status === 'inactive' || a.status === 'closed');
+		} else if (activeFilter === 'critical') {
+			filtered = filtered.filter((a) => a.severity === 5);
+		}
 
-			(alerts: Alert[]) => {
-				const query = searchQuery.trim().toLowerCase();
-				if (!query) return alerts;
+		if (query) {
+			filtered = filtered.filter((a) => {
+				const status = a.status ? String(a.status).toLowerCase() : '';
+				const alertType = a.alert_type ? String(a.alert_type).toLowerCase() : '';
+				const cameraId = a.camera_id ? String(a.camera_id).toLowerCase() : '';
+				const severity = a.severity !== undefined && a.severity !== null ? String(a.severity) : '';
 
-				return alerts.filter(
-					(a) =>
-						a.status.toLowerCase().includes(query) ||
-						(a.alert_type && a.alert_type.toLowerCase().includes(query)) ||
-						a.camera_id.toLowerCase().includes(query) ||
-						a.severity.toString().includes(query)
+				return (
+					status.includes(query) ||
+					alertType.includes(query) ||
+					cameraId.includes(query) ||
+					severity.includes(query)
 				);
-			}
-		];
+			});
+		}
 
-		return filters.reduce((currentData, applyFilter) => applyFilter(currentData), rawAlerts);
+		return filtered;
 	});
 
-	// derived states for summaries
-	let activeAlertsOnly = $derived(() => {
+	let activeAlertsOnly = $derived.by(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
 		return rawAlerts.filter((alert) => alert.status === 'active' || alert.status === 'open');
 	});
 
-	let openAlertsCount = $derived(() => {
+	let openAlertsCount = $derived.by(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
 		return rawAlerts.filter((a) => a.status === 'active' || a.status === 'open').length;
 	});
 
-	let closedAlertsCount = $derived(() => {
+	let closedAlertsCount = $derived.by(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
 		return rawAlerts.filter((a) => a.status === 'inactive' || a.status === 'closed').length;
 	});
 
-	let criticalAlertsCount = $derived(() => {
+	let criticalAlertsCount = $derived.by(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
 		return rawAlerts.filter((a) => a.severity === 5).length;
 	});
 
 	function toggleFilter(filterType: string) {
-		if (activeFilter === filterType) {
-			activeFilter = null;
-		} else {
-			activeFilter = filterType;
-		}
+		activeFilter = activeFilter === filterType ? null : filterType;
 	}
 </script>
 
@@ -82,7 +78,7 @@
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 		<Card
 			label="Open Alerts"
-			count={openAlertsCount()}
+			count={openAlertsCount}
 			isActive={activeFilter === 'open'}
 			style={openStyles}
 			onclick={() => toggleFilter('open')}
@@ -90,7 +86,7 @@
 
 		<Card
 			label="Closed Alerts"
-			count={closedAlertsCount()}
+			count={closedAlertsCount}
 			isActive={activeFilter === 'closed'}
 			style={closedStyles}
 			onclick={() => toggleFilter('closed')}
@@ -98,7 +94,7 @@
 
 		<Card
 			label="Critical Alerts"
-			count={criticalAlertsCount()}
+			count={criticalAlertsCount}
 			isActive={activeFilter === 'critical'}
 			style={criticalStyles}
 			onclick={() => toggleFilter('critical')}
@@ -115,8 +111,8 @@
 	</div>
 
 	<div class="flex gap-5">
-		{#if alertsData().length > 0}
-			<CustomTable data={alertsData()} {columns} />
+		{#if alertsData.length > 0}
+			<CustomTable data={alertsData} {columns} />
 		{:else}
 			<div
 				class="w-full rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
@@ -126,7 +122,7 @@
 		{/if}
 
 		<div class="w-1/2 space-y-2">
-			<Map alerts={activeAlertsOnly()} />
+			<Map alerts={activeAlertsOnly} />
 		</div>
 	</div>
 </div>
