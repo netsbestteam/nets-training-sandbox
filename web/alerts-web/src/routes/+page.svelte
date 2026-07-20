@@ -2,13 +2,14 @@
 	import type { ColumnDef } from '@tanstack/svelte-table';
 	import type { PageData } from './$types';
 	import CustomTable from '$lib/components/CustomTable.svelte';
+	import Map from '$lib/components/Map.svelte';
 
 	interface Alert {
 		alert_id: string;
 		severity: number;
 		alert_type: string | null;
 		alert_time: string;
-		status: string; // 'active', 'inactive', etc.
+		status: string;
 		location: { x: number; y: number };
 		camera_id: string;
 	}
@@ -84,6 +85,11 @@
 				`<span class="font-mono text-xs text-zinc-500 block truncate max-w-[150px]">${info.getValue()}</span>`
 		}
 	];
+
+	let activeAlertsOnly = $derived(() => {
+		const rawAlerts = (data.alerts as Alert[]) || [];
+		return rawAlerts.filter((alert) => alert.status === 'active');
+	});
 </script>
 
 <div class="space-y-6 p-8">
@@ -103,14 +109,19 @@
 			<span>Show inactive alerts</span>
 		</label>
 	</div>
+	<div class="flex gap-5">
+		{#if alertsData().length > 0}
+			<CustomTable data={alertsData()} {columns} />
+		{:else}
+			<div
+				class="rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
+			>
+				No alerts found.
+			</div>
+		{/if}
 
-	{#if alertsData().length > 0}
-		<CustomTable data={alertsData()} {columns} />
-	{:else}
-		<div
-			class="rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
-		>
-			No alerts found.
+		<div class="w-1/2 space-y-2">
+			<Map alerts={activeAlertsOnly()} />
 		</div>
-	{/if}
+	</div>
 </div>
