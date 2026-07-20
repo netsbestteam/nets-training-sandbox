@@ -1,95 +1,73 @@
 <script lang="ts">
-	import type { ColumnDef } from '@tanstack/svelte-table';
 	import type { PageData } from './$types';
 	import CustomTable from '$lib/components/CustomTable.svelte';
 	import Map from '$lib/components/Map.svelte';
-
-	interface Alert {
-		alert_id: string;
-		severity: number;
-		alert_type: string | null;
-		alert_time: string;
-		status: string;
-		location: { x: number; y: number };
-		camera_id: string;
-	}
+	import { columns, type Alert } from '$lib/components/TableColumns/AlertsColumns';
 
 	let { data }: { data: PageData } = $props();
 
-	let showInactive = $state(false);
+	let activeFilter = $state<string | null>(null);
+	let searchQuery = $state('');
 
 	let alertsData = $derived(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
-		if (showInactive) {
-			return rawAlerts;
-		}
-		return rawAlerts.filter((alert) => alert.status !== 'inactive');
+
+		const filters = [
+			(alerts: Alert[]) => {
+				if (!activeFilter) return alerts;
+				if (activeFilter === 'open')
+					return alerts.filter((a) => a.status === 'active' || a.status === 'open');
+				if (activeFilter === 'closed')
+					return alerts.filter((a) => a.status === 'inactive' || a.status === 'closed');
+				if (activeFilter === 'critical') return alerts.filter((a) => a.severity === 5);
+				return alerts;
+			},
+
+			(alerts: Alert[]) => {
+				const query = searchQuery.trim().toLowerCase();
+				if (!query) return alerts;
+
+				return alerts.filter(
+					(a) =>
+						a.status.toLowerCase().includes(query) ||
+						(a.alert_type && a.alert_type.toLowerCase().includes(query)) ||
+						a.camera_id.toLowerCase().includes(query) ||
+						a.severity.toString().includes(query)
+				);
+			}
+		];
+
+		return filters.reduce((currentData, applyFilter) => applyFilter(currentData), rawAlerts);
 	});
 
-	const columns: ColumnDef<Alert, any>[] = [
-		{
-			accessorKey: 'severity',
-			header: 'SEVERITY',
-			enableSorting: true,
-			cell: (info) => {
-				const value = Number(info.getValue());
-				let label = `${value} - Unknown`;
-				let classes = 'bg-zinc-500/10 text-zinc-400 ring-zinc-500/20';
-
-				if (value === 5) {
-					label = '5 - Critical';
-					classes = 'bg-red-500/10 text-red-400 ring-red-500/20';
-				} else if (value === 3 || value === 4) {
-					label = `${value} - High`;
-					classes = 'bg-orange-500/10 text-orange-400 ring-orange-500/20';
-				} else if (value === 2) {
-					label = '2 - Medium';
-					classes = 'bg-blue-500/10 text-blue-400 ring-blue-500/20';
-				} else if (value === 1) {
-					label = '1 - Low';
-					classes = 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20';
-				}
-
-				return `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset ${classes}">${label}</span>`;
-			}
-		},
-		{
-			accessorKey: 'status',
-			header: 'STATUS',
-			cell: (info) => `
-            <span class="capitalize px-2.5 py-1 rounded-full text-xs bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium">
-                ${info.getValue()}
-            </span>
-        `
-		},
-		{
-			accessorKey: 'alert_time',
-			header: 'DATE',
-			enableSorting: true,
-			cell: (info) =>
-				new Date(info.getValue()).toLocaleString('he-IL', {
-					dateStyle: 'short',
-					timeStyle: 'medium'
-				}),
-			sortingFn: 'datetime'
-		},
-		{
-			id: 'location',
-			header: 'LOCATION (X, Y)',
-			accessorFn: (row) => `${row.location.x}, ${row.location.y}`
-		},
-		{
-			accessorKey: 'camera_id',
-			header: 'CAMERA ID',
-			cell: (info) =>
-				`<span class="font-mono text-xs text-zinc-500 block truncate max-w-[150px]">${info.getValue()}</span>`
-		}
-	];
-
+	// derived states for summaries
 	let activeAlertsOnly = $derived(() => {
 		const rawAlerts = (data.alerts as Alert[]) || [];
-		return rawAlerts.filter((alert) => alert.status === 'active');
+		return rawAlerts.filter((alert) => alert.status === 'active' || alert.status === 'open');
 	});
+
+	let openAlertsCount = $derived(() => {
+		const rawAlerts = (data.alerts as Alert[]) || [];
+		return rawAlerts.filter((a) => a.status === 'active' || a.status === 'open').length;
+	});
+
+	let closedAlertsCount = $derived(() => {
+		const rawAlerts = (data.alerts as Alert[]) || [];
+		return rawAlerts.filter((a) => a.status === 'inactive' || a.status === 'closed').length;
+	});
+
+	let criticalAlertsCount = $derived(() => {
+		const rawAlerts = (data.alerts as Alert[]) || [];
+		return rawAlerts.filter((a) => a.severity === 5).length;
+	});
+
+	function toggleFilter(filterType: string) {
+		if (activeFilter === filterType) {
+			activeFilter = null;
+		} else {
+			activeFilter = filterType;
+		}
+	}
 </script>
 
 <div class="space-y-6 p-8">
@@ -97,26 +75,60 @@
 		class="flex flex-col items-center justify-between gap-4 border-b border-zinc-800 pb-5 sm:flex-row"
 	>
 		<h1 class="text-2xl font-bold tracking-wide text-white">Alerts Sandbox</h1>
-
-		<label
-			class="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/40 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-800/50"
-		>
-			<input
-				type="checkbox"
-				bind:checked={showInactive}
-				class="h-4 w-4 rounded border-zinc-700 bg-zinc-800 text-emerald-500 focus:ring-emerald-500/20 focus:ring-offset-zinc-950"
-			/>
-			<span>Show inactive alerts</span>
-		</label>
 	</div>
+
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+		<button
+			onclick={() => toggleFilter('open')}
+			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
+                {activeFilter === 'open'
+				? 'border-emerald-500/40 bg-emerald-950/10 shadow-lg ring-1 shadow-emerald-950/20 ring-emerald-500/20'
+				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
+		>
+			<p class="text-xs font-medium tracking-wider text-zinc-400 uppercase">Open Alerts</p>
+			<p class="mt-2 text-3xl font-bold text-white">{openAlertsCount()}</p>
+		</button>
+
+		<button
+			onclick={() => toggleFilter('closed')}
+			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
+                {activeFilter === 'closed'
+				? 'border-zinc-500/40 bg-zinc-800/20 shadow-lg ring-1 ring-zinc-500/20'
+				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
+		>
+			<p class="text-xs font-medium tracking-wider text-zinc-400 uppercase">Closed Alerts</p>
+			<p class="mt-2 text-3xl font-bold text-zinc-300">{closedAlertsCount()}</p>
+		</button>
+
+		<button
+			onclick={() => toggleFilter('critical')}
+			class="cursor-pointer rounded-xl border p-4 text-left backdrop-blur-md transition-all duration-200
+                {activeFilter === 'critical'
+				? 'border-red-500/40 bg-red-950/20 shadow-lg ring-1 shadow-red-950/20 ring-red-500/20'
+				: 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-800/40'}"
+		>
+			<p class="text-xs font-medium tracking-wider text-red-400/80 uppercase">Critical Alerts</p>
+			<p class="mt-2 text-3xl font-bold text-red-400">{criticalAlertsCount()}</p>
+		</button>
+	</div>
+
+	<div class="w-full">
+		<input
+			type="text"
+			bind:value={searchQuery}
+			placeholder="Filter by anything"
+			class="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-500 transition outline-none focus:border-zinc-700 focus:bg-zinc-900/60"
+		/>
+	</div>
+
 	<div class="flex gap-5">
 		{#if alertsData().length > 0}
 			<CustomTable data={alertsData()} {columns} />
 		{:else}
 			<div
-				class="rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
+				class="w-full rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
 			>
-				No alerts found.
+				No alerts found matching this selection.
 			</div>
 		{/if}
 
