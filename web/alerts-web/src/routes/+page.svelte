@@ -95,7 +95,13 @@
 
 	<div class="flex gap-5">
 		{#if alertsData.length > 0}
-			<CustomTable data={alertsData} {columns} />
+			<CustomTable
+				data={alertsData}
+				{columns}
+				onrowclick={(alert) => {
+					console.log('Main Page Triggered Click:', alert);
+				}}
+			/>
 		{:else}
 			<div
 				class="border-zinc-850 flex w-1/2 flex-col items-center justify-center rounded-xl border border-dashed bg-zinc-900/10 p-12 text-center"

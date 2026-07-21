@@ -51,11 +51,16 @@ export const columns: ColumnDef<Alert, any>[] = [
 		accessorKey: 'alert_time',
 		header: 'DATE',
 		enableSorting: true,
-		cell: (info) =>
-			new Date(info.getValue()).toLocaleString('he-IL', {
-				dateStyle: 'short',
-				timeStyle: 'medium'
-			}),
+		cell: (info) => {
+			const raw = info.getValue();
+			if (!raw) return '';
+
+			const [datePart, timePart] = raw.split('T');
+			const [year, month, day] = datePart.split('-');
+			const time = timePart.split('.')[0]; // remove millis
+
+			return `${day}/${month}/${year}, ${time}`;
+		},
 		sortingFn: 'datetime'
 	},
 	{
