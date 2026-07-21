@@ -34,7 +34,7 @@ export async function startConsumer() {
   logger.info("Starting alerts consumer");
 
   const messages = await consumer.consume();
-  const RADIUS_METERS = 1000000;
+  const RADIUS_METERS = 100000000;
 
   for await (const msg of messages) {
     try {

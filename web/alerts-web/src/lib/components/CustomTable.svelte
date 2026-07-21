@@ -7,7 +7,15 @@
 	} from '@tanstack/table-core';
 	import type { ColumnDef, SortingState } from '@tanstack/table-core';
 
-	let { data, columns }: { data: T[]; columns: ColumnDef<T, any>[] } = $props();
+	let {
+		data,
+		columns,
+		onrowclick
+	}: {
+		data: T[];
+		columns: ColumnDef<T, any>[];
+		onrowclick?: (rowData: T) => void;
+	} = $props();
 
 	let pagination = $state({ pageIndex: 0, pageSize: 10 });
 	let sorting = $state<SortingState>([]);
@@ -126,7 +134,13 @@
 
 			<tbody class="divide-y divide-zinc-800/60">
 				{#each rowModel.rows as row}
-					<tr class="transition hover:bg-zinc-800/30">
+					<tr
+						class="cursor-pointer transition hover:bg-zinc-800/30"
+						onclick={() => {
+							console.log('Row Clicked Data:', row.original);
+							onrowclick?.(row.original);
+						}}
+					>
 						{#each row.getVisibleCells() as cell}
 							<td class="px-6 py-4 whitespace-nowrap">
 								{#if cell.column.columnDef.cell}

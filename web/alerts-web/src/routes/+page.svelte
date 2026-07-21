@@ -5,99 +5,82 @@
 	import { columns, type Alert } from '$lib/components/TableColumns/AlertsColumns';
 	import Card from '$lib/components/Card.svelte';
 	import { closedStyles, criticalStyles, openStyles } from '$lib/styles/CardStyles';
+	import AlertsListener from '$lib/components/WebsocketListeners/AlertsListener.svelte';
+	import { createAlertsStore } from '$lib/stores/alerts.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	const alerts = createAlertsStore(data.alerts);
 
 	let activeFilter = $state<string | null>(null);
 	let searchQuery = $state('');
 
 	let alertsData = $derived.by(() => {
-		const rawAlerts = (data.alerts as Alert[]) || [];
+		let filtered = alerts.all;
 		const query = searchQuery.trim().toLowerCase();
 
-		let filtered = rawAlerts;
-		if (activeFilter === 'open') {
+		if (activeFilter === 'open')
 			filtered = filtered.filter((a) => a.status === 'active' || a.status === 'open');
-		} else if (activeFilter === 'closed') {
+		else if (activeFilter === 'closed')
 			filtered = filtered.filter((a) => a.status === 'inactive' || a.status === 'closed');
-		} else if (activeFilter === 'critical') {
-			filtered = filtered.filter((a) => a.severity === 5);
-		}
+		else if (activeFilter === 'critical') filtered = filtered.filter((a) => a.severity === 5);
 
 		if (query) {
-			filtered = filtered.filter((a) => {
-				const status = a.status ? String(a.status).toLowerCase() : '';
-				const alertType = a.alert_type ? String(a.alert_type).toLowerCase() : '';
-				const cameraId = a.camera_id ? String(a.camera_id).toLowerCase() : '';
-				const severity = a.severity !== undefined && a.severity !== null ? String(a.severity) : '';
-
-				return (
-					status.includes(query) ||
-					alertType.includes(query) ||
-					cameraId.includes(query) ||
-					severity.includes(query)
-				);
-			});
+			filtered = filtered.filter(
+				(a) =>
+					String(a.status).toLowerCase().includes(query) ||
+					String(a.alert_type).toLowerCase().includes(query) ||
+					String(a.camera_id).toLowerCase().includes(query)
+			);
 		}
-
 		return filtered;
 	});
 
-	let activeAlertsOnly = $derived.by(() => {
-		const rawAlerts = (data.alerts as Alert[]) || [];
-		return rawAlerts.filter((alert) => alert.status === 'active' || alert.status === 'open');
-	});
+	let activeAlertsOnly = $derived(
+		alerts.all.filter((a) => a.status === 'active' || a.status === 'open')
+	);
+	let openAlertsCount = $derived(
+		alerts.all.filter((a) => a.status === 'active' || a.status === 'open').length
+	);
+	let closedAlertsCount = $derived(
+		alerts.all.filter((a) => a.status === 'inactive' || a.status === 'closed').length
+	);
+	let criticalAlertsCount = $derived(alerts.all.filter((a) => a.severity === 5).length);
 
-	let openAlertsCount = $derived.by(() => {
-		const rawAlerts = (data.alerts as Alert[]) || [];
-		return rawAlerts.filter((a) => a.status === 'active' || a.status === 'open').length;
-	});
-
-	let closedAlertsCount = $derived.by(() => {
-		const rawAlerts = (data.alerts as Alert[]) || [];
-		return rawAlerts.filter((a) => a.status === 'inactive' || a.status === 'closed').length;
-	});
-
-	let criticalAlertsCount = $derived.by(() => {
-		const rawAlerts = (data.alerts as Alert[]) || [];
-		return rawAlerts.filter((a) => a.severity === 5).length;
-	});
-
-	function toggleFilter(filterType: string) {
-		activeFilter = activeFilter === filterType ? null : filterType;
-	}
+	const getSeverityColor = (a: Alert) =>
+		['#10b981', '#10b981', '#3b82f6', '#f97316', '#f97316', '#ef4444'][a.severity] || '#10b981';
+	const getAlertPopup = (a: Alert) =>
+		`<div style="color: #18181b; font-size: 12px;">
+        <strong>Camera ID:</strong> ${a.camera_id} <br />
+        <strong>Severity: </strong> ${a.severity} <br />
+        <strong>Location: </strong> (${a.location?.x}, ${a.location?.y})
+        </div>`;
 </script>
 
-<div class="space-y-6 p-8">
-	<div
-		class="flex flex-col items-center justify-between gap-4 border-b border-zinc-800 pb-5 sm:flex-row"
-	>
-		<h1 class="text-2xl font-bold tracking-wide text-white">Alerts Sandbox</h1>
-	</div>
+<AlertsListener store={alerts} />
 
+<div class="space-y-6 p-8">
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 		<Card
 			label="Open Alerts"
 			count={openAlertsCount}
 			isActive={activeFilter === 'open'}
 			style={openStyles}
-			onclick={() => toggleFilter('open')}
+			onclick={() => (activeFilter = activeFilter === 'open' ? null : 'open')}
 		/>
-
 		<Card
 			label="Closed Alerts"
 			count={closedAlertsCount}
 			isActive={activeFilter === 'closed'}
 			style={closedStyles}
-			onclick={() => toggleFilter('closed')}
+			onclick={() => (activeFilter = activeFilter === 'closed' ? null : 'closed')}
 		/>
-
 		<Card
 			label="Critical Alerts"
 			count={criticalAlertsCount}
 			isActive={activeFilter === 'critical'}
 			style={criticalStyles}
-			onclick={() => toggleFilter('critical')}
+			onclick={() => (activeFilter = activeFilter === 'critical' ? null : 'critical')}
 		/>
 	</div>
 
@@ -106,7 +89,7 @@
 			type="text"
 			bind:value={searchQuery}
 			placeholder="Filter by anything"
-			class="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-500 transition outline-none focus:border-zinc-700 focus:bg-zinc-900/60"
+			class="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-200 outline-none"
 		/>
 	</div>
 
@@ -115,14 +98,35 @@
 			<CustomTable data={alertsData} {columns} />
 		{:else}
 			<div
-				class="w-full rounded-xl border border-zinc-800 bg-zinc-900/20 p-8 text-center text-sm text-zinc-500"
+				class="border-zinc-850 flex w-1/2 flex-col items-center justify-center rounded-xl border border-dashed bg-zinc-900/10 p-12 text-center"
 			>
-				No alerts found matching this selection.
+				<svg
+					class="mb-3 h-8 w-8 text-zinc-600"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="1.5"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					/>
+				</svg>
+				<h3 class="text-sm font-medium text-zinc-400">No matching alerts</h3>
 			</div>
 		{/if}
 
-		<div class="w-1/2 space-y-2">
-			<Map alerts={activeAlertsOnly} />
+		<div class="h-[610px] w-1/2">
+			<Map
+				items={$state.snapshot(activeAlertsOnly)}
+				getLat={(a) => a.location?.y}
+				getLng={(a) => a.location?.x}
+				getMarkerColor={getSeverityColor}
+				getPopupHtml={getAlertPopup}
+				center={[32.0, 34.78]}
+				zoom={8}
+			/>
 		</div>
 	</div>
 </div>

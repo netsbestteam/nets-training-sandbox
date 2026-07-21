@@ -42,7 +42,11 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         }
 
         if (server) {
-          server.publish("all-alerts", JSON.stringify({ data: body }));
+          const insertedAlert = await db
+            .select()
+            .from(alerts)
+            .where(eq(alerts.alert_id, newAlertId));
+          server.publish("all-alerts", JSON.stringify({ data: insertedAlert }));
 
           // Publish to jetstream
           await js.publish(

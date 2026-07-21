@@ -15,7 +15,7 @@ export const MapBoundsSchema = z.object({
 export const AlertSchema = z.object({
   severity: z.number().gte(1).lte(5),
   status: z.enum(["open", "closed"]),
-  type: z.string().optional(),
+  alert_type: z.string().optional(),
   location: LocationSchema.optional(),
   camera_id: z.uuid().optional(),
 });
