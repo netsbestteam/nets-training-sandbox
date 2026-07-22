@@ -32,7 +32,9 @@ export const UpdateAlertStatus = z.object({
 });
 
 export const AlertAssignment = z.object({
-  investigatorId: z.uuid(),
+  investigatorIds: z
+    .array(z.string().uuid())
+    .min(1, "At least one investigator must be selected"),
 });
 
 export type AlertInput = z.infer<typeof AlertSchema>;

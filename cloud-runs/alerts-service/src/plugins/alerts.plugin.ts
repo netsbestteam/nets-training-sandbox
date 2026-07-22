@@ -87,27 +87,42 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     "/:id/assign",
     async ({ params, body }) => {
       try {
-        logger.info("Attempting POST new alert assignment...");
-
-        await db.insert(alert_assignments).values({
-          investigator_id: body.investigatorId,
-          alert_id: params.id,
-        });
-
-        // Publish event to jetstream
-        await js.publish(
-          AlertEvents.Assigned,
-          JSONCodec().encode({
-            investigatorId: body.investigatorId,
-            alertId: params.id,
-          }),
+        logger.info(
+          `Attempting POST bulk alert assignments for alert: ${params.id}`,
         );
+
+        const assignmentRows = body.investigatorIds.map((id: string) => ({
+          investigator_id: id,
+          alert_id: params.id,
+        }));
+
+        if (assignmentRows.length === 0) {
+          return { data: body };
+        }
+
+        await db.insert(alert_assignments).values(assignmentRows);
+
+        // 3. Publish an event to jetstream for each assigned investigator
+        const codec = JSONCodec();
+        const publishPromises = body.investigatorIds.map((id: string) =>
+          js.publish(
+            AlertEvents.Assigned,
+            codec.encode({
+              investigatorId: id,
+              alertId: params.id,
+            }),
+          ),
+        );
+
+        await Promise.all(publishPromises);
 
         return { data: body };
       } catch (e: unknown) {
-        logger.error("Error POST new alert assignment: " + e);
+        logger.error("Error POST bulk alert assignment: " + e);
         throw e;
       }
     },
-    { body: AlertAssignment },
+    {
+      body: AlertAssignment,
+    },
   );

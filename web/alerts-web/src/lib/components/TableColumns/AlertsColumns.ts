@@ -65,26 +65,16 @@ export const columns: ColumnDef<Alert, any>[] = [
 		header: 'STATUS',
 		enableSorting: true,
 		cell: (info) => {
-			const currentStatus = info.getValue();
-			const alertId = info.row.original.alert_id;
-
+			const currentStatus = info.getValue() as string;
 			const isOpen = currentStatus === 'open' || currentStatus === 'active';
-			const isClosed = currentStatus === 'closed' || currentStatus === 'inactive';
 
-			return `
-                <select 
-                    class="capitalize px-2 py-1 rounded-lg text-xs bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium outline-none cursor-pointer focus:border-zinc-500 transition-colors"
-                    onclick="event.stopPropagation()"
-                    onchange="
-                        window.dispatchEvent(new CustomEvent('update-alert-status', { 
-                            detail: { id: '${alertId}', status: this.value } 
-                        }));
-                    "
-                >
-                    <option value="open" ${isOpen ? 'selected' : ''}>Open</option>
-                    <option value="closed" ${isClosed ? 'selected' : ''}>Closed</option>
-                </select>
-            `;
+			// Match the styling framework of your severity tags
+			const label = isOpen ? 'Open' : 'Closed';
+			const classes = isOpen
+				? 'bg-red-500/10 text-red-400 ring-red-500/20'
+				: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20';
+
+			return `<span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset ${classes}">${label}</span>`;
 		}
 	}
 ];
