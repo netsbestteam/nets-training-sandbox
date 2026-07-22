@@ -9,6 +9,7 @@ import {
 import { logger } from "../../../shared-backend/src/logger";
 import { setupJetStream } from "../../dispatcher-service/nats/setup.plugin";
 import cors from "@elysiajs/cors";
+import { investigatorRoutes } from "./plugins/investigators.plugin";
 
 await setupJetStream();
 
@@ -53,6 +54,7 @@ export const app = new Elysia()
   })
   .use(connection)
   .use(alertRoutes)
+  .use(investigatorRoutes)
   .listen(process.env.ALERT_SERVICE_PORT!);
 
 await startWebSocketConsumer(app.server);

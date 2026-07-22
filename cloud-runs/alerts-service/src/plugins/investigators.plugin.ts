@@ -1,0 +1,42 @@
+import Elysia from "elysia";
+import { logger } from "../../../../shared-backend/src/logger";
+import { db } from "../../../../shared-backend/src/db";
+import {
+  alert_assignments,
+  investigators,
+} from "../../../../shared-backend/src/db/schema";
+import { eq } from "drizzle-orm";
+
+export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
+  .get("/", async () => {
+    try {
+      logger.info("Getting investigators");
+      return await db.select().from(investigators);
+    } catch (e: unknown) {
+      logger.error("Error getting investigators: " + e);
+      throw e;
+    }
+  })
+  .get("/:alertId/investigators", async ({ params }) => {
+    try {
+      logger.info(`Testing lookup for alertId: [${params.alertId}]`);
+
+      const results = await db
+        .select({
+          id: investigators.investigator_id,
+          name: investigators.full_name,
+        })
+        .from(alert_assignments)
+        .innerJoin(
+          investigators,
+          eq(alert_assignments.investigator_id, investigators.investigator_id),
+        )
+        .where(eq(alert_assignments.alert_id, params.alertId));
+
+      logger.info(`Step 2 - Final joined results: ${results.length}`);
+      return results;
+    } catch (e: unknown) {
+      logger.error(`Error getting ${params.alertId} investigators: ${e}`);
+      throw e;
+    }
+  });

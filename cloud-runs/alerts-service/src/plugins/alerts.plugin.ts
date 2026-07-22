@@ -90,8 +90,8 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         logger.info("Attempting POST new alert assignment...");
 
         await db.insert(alert_assignments).values({
-          investigatorId: body.investigatorId,
-          alertId: params.id,
+          investigator_id: body.investigatorId,
+          alert_id: params.id,
         });
 
         // Publish event to jetstream
