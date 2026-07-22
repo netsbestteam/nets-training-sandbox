@@ -44,7 +44,7 @@ export const load: PageServerLoad = async ({ url, cookies }) => {
 					client_id: KEYCLOAK_ID,
 					code,
 					redirect_uri: `${url.origin}/login`,
-					code_verifier: codeVerifier // שולחים את המפתח המקורי לאימות!
+					code_verifier: codeVerifier
 				})
 			});
 

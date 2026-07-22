@@ -7,6 +7,7 @@
 	import { closedStyles, criticalStyles, openStyles } from '$lib/styles/CardStyles';
 	import AlertsListener from '$lib/components/WebsocketListeners/AlertsListener.svelte';
 	import { createAlertsStore } from '$lib/stores/alerts.svelte';
+	import ActionsDrawer from '$lib/components/ActionsDrawer.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -45,7 +46,9 @@
 	let closedAlertsCount = $derived(
 		alerts.all.filter((a) => a.status === 'inactive' || a.status === 'closed').length
 	);
-	let criticalAlertsCount = $derived(alerts.all.filter((a) => a.severity === 5).length);
+	let criticalAlertsCount = $derived(
+		alerts.all.filter((a) => a.severity === 5 && a.status === 'open').length
+	);
 
 	const getSeverityColor = (a: Alert) =>
 		['#10b981', '#10b981', '#3b82f6', '#f97316', '#f97316', '#ef4444'][a.severity] || '#10b981';
@@ -55,6 +58,22 @@
         <strong>Severity: </strong> ${a.severity} <br />
         <strong>Location: </strong> (${a.location?.x}, ${a.location?.y})
         </div>`;
+
+	// drawer state
+	let isDrawerOpen = $state(false);
+	let selectedAlert = $state<Alert | null>(null);
+
+	function handleRowClick(alert: Alert) {
+		selectedAlert = alert;
+		isDrawerOpen = true;
+	}
+
+	function handleStatusUpdate(alertId: string, nextStatus: string) {
+		const target = alerts.all.find((a) => a.alert_id === alertId);
+		if (target) {
+			target.status = nextStatus;
+		}
+	}
 </script>
 
 <AlertsListener store={alerts} />
@@ -95,13 +114,7 @@
 
 	<div class="flex gap-5">
 		{#if alertsData.length > 0}
-			<CustomTable
-				data={alertsData}
-				{columns}
-				onrowclick={(alert) => {
-					console.log('Main Page Triggered Click:', alert);
-				}}
-			/>
+			<CustomTable data={alertsData} {columns} onrowclick={handleRowClick} />
 		{:else}
 			<div
 				class="border-zinc-850 flex w-1/2 flex-col items-center justify-center rounded-xl border border-dashed bg-zinc-900/10 p-12 text-center"
@@ -135,4 +148,10 @@
 			/>
 		</div>
 	</div>
+
+	<ActionsDrawer
+		bind:open={isDrawerOpen}
+		alert={selectedAlert}
+		onstatusupdate={handleStatusUpdate}
+	/>
 </div>

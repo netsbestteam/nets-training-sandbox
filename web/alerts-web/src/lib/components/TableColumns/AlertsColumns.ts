@@ -38,16 +38,6 @@ export const columns: ColumnDef<Alert, any>[] = [
 		}
 	},
 	{
-		accessorKey: 'status',
-		header: 'STATUS',
-		enableSorting: true,
-		cell: (info) => `
-            <span class="capitalize px-2.5 py-1 rounded-full text-xs bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium">
-                ${info.getValue()}
-            </span>
-        `
-	},
-	{
 		accessorKey: 'alert_time',
 		header: 'DATE',
 		enableSorting: true,
@@ -57,7 +47,7 @@ export const columns: ColumnDef<Alert, any>[] = [
 
 			const [datePart, timePart] = raw.split('T');
 			const [year, month, day] = datePart.split('-');
-			const time = timePart.split('.')[0]; // remove millis
+			const time = timePart.split('.')[0];
 
 			return `${day}/${month}/${year}, ${time}`;
 		},
@@ -68,6 +58,33 @@ export const columns: ColumnDef<Alert, any>[] = [
 		header: 'TYPE',
 		enableSorting: true,
 		cell: (info) =>
-			`<span class="font-mono text-xs text-zinc-500 block truncate max-w-[150px]">${info.getValue()}</span>`
+			`<span class="font-mono text-xs text-zinc-400 block truncate max-w-[150px]">${info.getValue()}</span>`
+	},
+	{
+		accessorKey: 'status',
+		header: 'STATUS',
+		enableSorting: true,
+		cell: (info) => {
+			const currentStatus = info.getValue();
+			const alertId = info.row.original.alert_id;
+
+			const isOpen = currentStatus === 'open' || currentStatus === 'active';
+			const isClosed = currentStatus === 'closed' || currentStatus === 'inactive';
+
+			return `
+                <select 
+                    class="capitalize px-2 py-1 rounded-lg text-xs bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium outline-none cursor-pointer focus:border-zinc-500 transition-colors"
+                    onclick="event.stopPropagation()"
+                    onchange="
+                        window.dispatchEvent(new CustomEvent('update-alert-status', { 
+                            detail: { id: '${alertId}', status: this.value } 
+                        }));
+                    "
+                >
+                    <option value="open" ${isOpen ? 'selected' : ''}>Open</option>
+                    <option value="closed" ${isClosed ? 'selected' : ''}>Closed</option>
+                </select>
+            `;
+		}
 	}
 ];

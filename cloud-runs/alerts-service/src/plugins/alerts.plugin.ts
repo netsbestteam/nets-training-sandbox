@@ -74,6 +74,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           .set({ status: body.status })
           .where(eq(alerts.alert_id, params.id));
 
+        logger.info("PATCH alert status successfull.");
         return { status: body.status };
       } catch (e: unknown) {
         logger.error("Error PATCH alert status: " + e);

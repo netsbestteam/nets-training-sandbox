@@ -8,10 +8,18 @@ import {
 } from "./plugins/connection.plugin";
 import { logger } from "../../../shared-backend/src/logger";
 import { setupJetStream } from "../../dispatcher-service/nats/setup.plugin";
+import cors from "@elysiajs/cors";
 
 await setupJetStream();
 
 export const app = new Elysia()
+  .use(
+    cors({
+      origin: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }),
+  )
   .use(authGuard)
   .error({ UnauthorizedError })
   .onError(({ code, error, set }) => {
