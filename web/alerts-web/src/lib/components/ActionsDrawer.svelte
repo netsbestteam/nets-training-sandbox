@@ -119,7 +119,6 @@
 							</div>
 						{/if}
 
-						<!-- Clean integrated sub-component -->
 						<InvestigatorDropdown bind:assigned pool={investigators} />
 					</div>
 
