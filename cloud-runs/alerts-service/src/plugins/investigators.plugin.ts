@@ -19,7 +19,7 @@ export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
   })
   .get("/:alertId/investigators", async ({ params }) => {
     try {
-      logger.info(`Testing lookup for alertId: [${params.alertId}]`);
+      logger.info(`getting investigators for alert ${params.alertId}`);
 
       const results = await db
         .select({
@@ -33,7 +33,7 @@ export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
         )
         .where(eq(alert_assignments.alert_id, params.alertId));
 
-      logger.info(`Step 2 - Final joined results: ${results.length}`);
+      logger.info(`investigators retrieved successfully`);
       return results;
     } catch (e: unknown) {
       logger.error(`Error getting ${params.alertId} investigators: ${e}`);
