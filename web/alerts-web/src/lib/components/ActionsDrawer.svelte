@@ -23,6 +23,7 @@
 		investigators: Investigator[];
 	} = $props();
 
+	// states for the investigators dropdown
 	let assigned = $state<Investigator[]>([]);
 	let dropdownOpen = $state(false);
 
@@ -31,13 +32,13 @@
 			assigned = [];
 			dropdownOpen = false;
 
+			// fetch investigators for the alert
 			fetch(`/api/investigators/${alert.alert_id}/investigators`)
 				.then((res) => {
 					if (!res.ok) throw new Error('Failed to load');
 					return res.json();
 				})
 				.then((data) => {
-					// Ensure the items are flat Investigator objects
 					assigned = data.map((item: any) => (item.investigator ? item.investigator : item));
 				})
 				.catch((err) => {
@@ -61,6 +62,7 @@
 		assigned = assigned.filter((i) => i.investigator_id !== investigator.investigator_id);
 	}
 
+	// available investigators
 	let availablePool = $derived(
 		investigators.filter(
 			(investigator) => !assigned.some((a) => a.investigator_id === investigator.investigator_id)
@@ -85,6 +87,7 @@
 
 			if (!response.ok) throw new Error('Failed to save');
 
+			// reaload to get fresh data
 			await invalidateAll();
 
 			open = false;
