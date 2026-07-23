@@ -91,25 +91,44 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           `Attempting POST bulk alert assignments for alert: ${params.id}`,
         );
 
-        const assignmentRows = body.investigatorIds.map((id: string) => ({
-          investigator_id: id,
-          alert_id: params.id,
-        }));
+        const alertId = params.id;
+        const incomingIds = body.investigatorIds;
 
-        if (assignmentRows.length === 0) {
+        const currentAssignments = await db
+          .select({ investigatorId: alert_assignments.investigator_id })
+          .from(alert_assignments)
+          .where(eq(alert_assignments.alert_id, alertId));
+
+        const currentIds = currentAssignments.map((row) => row.investigatorId);
+
+        const newlyAssignedIds = incomingIds.filter(
+          (id) => !currentIds.includes(id),
+        );
+
+        // delete all of the current assigned investigators
+        await db
+          .delete(alert_assignments)
+          .where(eq(alert_assignments.alert_id, alertId));
+
+        if (incomingIds.length === 0) {
           return { data: body };
         }
 
+        const assignmentRows = incomingIds.map((id: string) => ({
+          investigator_id: id,
+          alert_id: alertId,
+        }));
+
         await db.insert(alert_assignments).values(assignmentRows);
 
-        // 3. Publish an event to jetstream for each assigned investigator
+        // only publish events for investigators who are newly added
         const codec = JSONCodec();
-        const publishPromises = body.investigatorIds.map((id: string) =>
+        const publishPromises = newlyAssignedIds.map((id: string) =>
           js.publish(
             AlertEvents.Assigned,
             codec.encode({
               investigatorId: id,
-              alertId: params.id,
+              alertId: alertId,
             }),
           ),
         );

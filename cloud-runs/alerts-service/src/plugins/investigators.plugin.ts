@@ -23,8 +23,10 @@ export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
 
       const results = await db
         .select({
-          id: investigators.investigator_id,
-          name: investigators.full_name,
+          investigator_id: investigators.investigator_id,
+          full_name: investigators.full_name,
+          team: investigators.team,
+          is_active: investigators.is_active,
         })
         .from(alert_assignments)
         .innerJoin(

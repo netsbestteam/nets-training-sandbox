@@ -9,24 +9,26 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw error(401, 'Unauthorized');
 	}
 
+	const token = locals.user.token;
+
 	try {
-		const response = await fetch(`${ALERTS_SERVICE_URL}/alerts`, {
-			method: 'GET',
-			headers: {
-				Authorization: `Bearer ${locals.user.token}`,
-				Accept: 'application/json'
-			}
-		});
+		const [alertsRes, investigatorsRes] = await Promise.all([
+			fetch(`${ALERTS_SERVICE_URL}/alerts`, {
+				headers: { Authorization: `Bearer ${token}` }
+			}),
+			fetch(`http://localhost:3001/investigators`, {
+				headers: { Authorization: `Bearer ${token}` }
+			})
+		]);
 
-		if (!response.ok) {
-			console.log('Alerts service error:', await response.text());
-			throw error(response.status, 'Failed to fetch alerts from service');
-		}
+		if (!alertsRes.ok) throw error(alertsRes.status, 'Failed to fetch alerts');
 
-		const alerts = await response.json();
+		const alerts = await alertsRes.json();
+		const investigators = investigatorsRes.ok ? await investigatorsRes.json() : [];
 
 		return {
-			alerts
+			alerts,
+			investigators
 		};
 	} catch (err) {
 		console.log('Error connecting to alerts service:', err);

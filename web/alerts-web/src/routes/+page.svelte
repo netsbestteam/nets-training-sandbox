@@ -153,5 +153,6 @@
 		bind:open={isDrawerOpen}
 		alert={selectedAlert}
 		onstatusupdate={handleStatusUpdate}
+		investigators={data.investigators}
 	/>
 </div>
