@@ -13,6 +13,12 @@
 
 	const alerts = createAlertsStore(data.alerts);
 
+	$effect(() => {
+		if (data.alerts) {
+			alerts.setAlerts(data.alerts);
+		}
+	});
+
 	let activeFilter = $state<string | null>(null);
 	let searchQuery = $state('');
 

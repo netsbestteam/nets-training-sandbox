@@ -11,6 +11,14 @@ class AlertsStore {
 		return this.#alerts;
 	}
 
+	set all(newAlerts: Alert[]) {
+		this.#alerts = newAlerts.map(this.#normalize);
+	}
+
+	setAlerts(newAlerts: Alert[]) {
+		this.#alerts = newAlerts.map(this.#normalize);
+	}
+
 	add(rawPayload: any) {
 		const data = rawPayload?.data?.[0] ?? rawPayload;
 		if (!data || typeof data !== 'object') return;

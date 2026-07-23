@@ -129,6 +129,8 @@
 							return async ({ result, update }) => {
 								if (result.type === 'success') {
 									if (alert && submittedStatus) onstatusupdate(alert.alert_id, submittedStatus);
+
+									await invalidateAll();
 									open = false;
 								}
 								await update({ reset: false });
