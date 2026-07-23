@@ -15,12 +15,14 @@
 		open = $bindable(false),
 		alert = $bindable(),
 		onstatusupdate,
-		investigators
+		investigators,
+		onLocate
 	}: {
 		open: boolean;
 		alert: Alert | null;
 		onstatusupdate: (alertId: string, nextStatus: string) => void;
 		investigators: Investigator[];
+		onLocate?: (alertId: string) => void;
 	} = $props();
 
 	// states for the investigators dropdown
@@ -114,13 +116,37 @@
 						<Drawer.Title class="flex items-center gap-2 text-lg font-semibold text-white">
 							<span>Alert Actions</span>
 							<span class="rounded bg-zinc-800 px-2 py-0.5 font-mono text-xs text-zinc-400">
-								#{alert.alert_id.slice(0, 8)}
+								#{alert.alert_id}
 							</span>
 						</Drawer.Title>
 						<Drawer.Description class="mt-1 text-xs text-zinc-400">
 							Camera ID: {alert.camera_id}
 						</Drawer.Description>
 					</div>
+
+					{#if alert.location?.x && alert.location?.y && alert.status !== 'closed'}
+						<button
+							type="button"
+							onclick={() => onLocate?.(alert.alert_id)}
+							class="hover:bg-zinc-850 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition hover:text-white"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+								<circle cx="12" cy="10" r="3" />
+							</svg>
+							Locate on map
+						</button>
+					{/if}
 
 					<!-- status management -->
 					<form

@@ -80,6 +80,8 @@
 			target.status = nextStatus;
 		}
 	}
+
+	let focusedAlertId = $state<string | null>(null);
 </script>
 
 <AlertsListener store={alerts} />
@@ -151,6 +153,7 @@
 				getPopupHtml={getAlertPopup}
 				center={[32.0, 34.78]}
 				zoom={8}
+				activeAlertId={focusedAlertId}
 			/>
 		</div>
 	</div>
@@ -160,5 +163,9 @@
 		alert={selectedAlert}
 		onstatusupdate={handleStatusUpdate}
 		investigators={data.investigators}
+		onLocate={(alertId) => {
+			focusedAlertId = alertId;
+			isDrawerOpen = false;
+		}}
 	/>
 </div>

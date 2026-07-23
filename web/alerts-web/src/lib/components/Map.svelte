@@ -10,6 +10,8 @@
 		getPopupHtml: (item: T) => string;
 		center?: [number, number];
 		zoom?: number;
+		activeAlertId?: string | null;
+		getItemId?: (item: T) => string | null;
 	}
 
 	let {
@@ -19,24 +21,30 @@
 		getPopupHtml,
 		getMarkerColor = () => '#3b82f6',
 		center = [31.4, 35.0],
-		zoom = 8
+		zoom = 8,
+		activeAlertId = null,
+		getItemId = (item: any) => item?.alert_id
 	}: Props = $props();
 
 	let mapElement = $state<HTMLDivElement>();
 	let markerLayer: any;
+	let mapInstance: any;
 	let L = $state<typeof LeafletNamespace>();
+
+	// dictionary to keep track of active marker instances by their ID
+	let markerMap = new Map<string, any>();
 
 	onMount(async () => {
 		if (!mapElement) return;
 
 		L = (await import('leaflet')).default;
-		const map = L.map(mapElement).setView(center, zoom);
+		mapInstance = L.map(mapElement).setView(center, zoom);
 
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 			attribution: '&copy; OpenStreetMap &copy; CARTO'
-		}).addTo(map);
+		}).addTo(mapInstance);
 
-		markerLayer = L.layerGroup().addTo(map);
+		markerLayer = L.layerGroup().addTo(mapInstance);
 	});
 
 	$effect(() => {
@@ -45,6 +53,7 @@
 
 		if (!currentLayer || !leaflet) return;
 		currentLayer.clearLayers();
+		markerMap.clear(); // clear local tracking cache on fresh updates
 
 		items.forEach((item) => {
 			const lat = getLat(item);
@@ -63,7 +72,30 @@
 				.bindPopup(getPopupHtml(item));
 
 			currentLayer.addLayer(marker);
+
+			const id = getItemId(item);
+			if (id) {
+				markerMap.set(id, marker);
+			}
 		});
+	});
+
+	$effect(() => {
+		const targetId = activeAlertId;
+		const map = mapInstance;
+
+		if (targetId && map && markerMap.has(targetId)) {
+			const marker = markerMap.get(targetId);
+			const latLng = marker.getLatLng();
+
+			map.flyTo(latLng, 14, {
+				duration: 1.2
+			});
+
+			map.once('moveend', () => {
+				marker.openPopup();
+			});
+		}
 	});
 </script>
 
