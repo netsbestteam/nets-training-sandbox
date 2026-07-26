@@ -30,7 +30,8 @@
 			filtered = filtered.filter((a) => a.status === 'active' || a.status === 'open');
 		else if (activeFilter === 'closed')
 			filtered = filtered.filter((a) => a.status === 'inactive' || a.status === 'closed');
-		else if (activeFilter === 'critical') filtered = filtered.filter((a) => a.severity === 5);
+		else if (activeFilter === 'critical')
+			filtered = filtered.filter((a) => a.severity === 5 && a.status === 'open');
 
 		if (query) {
 			filtered = filtered.filter(
