@@ -1,6 +1,7 @@
-// lib/auth_service.dart
+// lib/services/auth_service.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import this
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
@@ -9,13 +10,13 @@ class AuthService {
 
   static const String _tokenKey = 'jwt_access_token';
 
-  // Keycloak configurations
-  static const String _clientId = 'public';
+  static final String _clientId = dotenv.env['KEYCLOAK_CLIENT_ID'] ?? 'public';
+  static final String _redirectUrl =
+      dotenv.env['KEYCLOAK_REDIRECT_URL'] ?? 'myflutterapp://oauthredirect';
+  static final String _realmUrl =
+      dotenv.env['KEYCLOAK_REALM_URL'] ??
+      'http://10.0.2.2:8080/realms/nets-sandbox';
 
-  static const String _redirectUrl = 'myflutterapp://oauthredirect';
-
-  // Base URL pointing to the individual realm root for local emulator development
-  static const String _realmUrl = 'http://10.0.2.2:8080/realms/nets-sandbox';
   static const List<String> _scopes = ['openid', 'profile', 'email'];
 
   static Future<String?> loginWithKeycloak() async {
@@ -27,7 +28,7 @@ class AuthService {
             AuthorizationTokenRequest(
               _clientId,
               _redirectUrl,
-              serviceConfiguration: const AuthorizationServiceConfiguration(
+              serviceConfiguration: AuthorizationServiceConfiguration(
                 authorizationEndpoint:
                     '$_realmUrl/protocol/openid-connect/auth',
                 tokenEndpoint: '$_realmUrl/protocol/openid-connect/token',
@@ -55,12 +56,10 @@ class AuthService {
     return null;
   }
 
-  /// Read the saved token from secure storage
   static Future<String?> getStoredToken() async {
     return await _secureStorage.read(key: _tokenKey);
   }
 
-  /// Logout and clear secure storage
   static Future<void> logout() async {
     await _secureStorage.delete(key: _tokenKey);
   }

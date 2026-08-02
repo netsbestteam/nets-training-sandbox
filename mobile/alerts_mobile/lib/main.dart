@@ -1,11 +1,24 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
 import 'services/permission_service.dart';
 
-void main() {
+void main() async {
+  // ensure Flutter engine bindings are fully booted before assets are read
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    debugPrint("attempting to load environment variables...");
+    await dotenv.load(fileName: ".env");
+    debugPrint("environment variables loaded successfully.");
+  } catch (e) {
+    debugPrint("environment Configuration Error: $e");
+    debugPrint("falling back onto AuthService default values.");
+  }
+
   runApp(const MainApp());
 }
 

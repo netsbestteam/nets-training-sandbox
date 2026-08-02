@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(child: Text('Hello World! You are authenticated.')),
+      body: const Center(child: Text('You are authenticated.')),
     );
   }
 }
