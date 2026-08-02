@@ -1,7 +1,9 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
-import 'services/permission_service.dart'; // IMPORTED: Your permission service file
+import 'services/permission_service.dart';
 
 void main() {
   runApp(const MainApp());
@@ -42,10 +44,10 @@ class _MainAppState extends State<MainApp> {
             await PermissionService.requestLocationPermission();
 
         if (gpsGranted) {
-          debugPrint("📍 GPS Permission Granted by user.");
+          debugPrint("GPS Permission Granted by user.");
         } else {
           debugPrint(
-            "⚠️ GPS Permission Denied by user. Proceeding with limited features.",
+            "GPS Permission Denied by user. Proceeding with limited features.",
           );
         }
       }
@@ -76,56 +78,10 @@ class _MainAppState extends State<MainApp> {
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : _accessToken == null
           ? LoginScreen(onLoginPressed: _handleLogin)
-          : SandboxHomeScreen(
+          : HomeScreen(
               accessToken: _accessToken!,
               onLogoutPressed: _handleLogout,
             ),
-    );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
-  final VoidCallback onLoginPressed;
-  const LoginScreen({super.key, required this.onLoginPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Center(
-        child: ElevatedButton.icon(
-          icon: const Icon(Icons.lock_open),
-          label: const Text('Login with Keycloak'),
-          onPressed: onLoginPressed,
-        ),
-      ),
-    );
-  }
-}
-
-class SandboxHomeScreen extends StatelessWidget {
-  final String accessToken;
-  final VoidCallback onLogoutPressed;
-
-  const SandboxHomeScreen({
-    super.key,
-    required this.accessToken,
-    required this.onLogoutPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NETS_SANDBOX'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: onLogoutPressed,
-          ),
-        ],
-      ),
-      body: const Center(child: Text('Hello World! You are authenticated.')),
     );
   }
 }
