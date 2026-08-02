@@ -15,7 +15,7 @@ class PermissionService {
       }
 
       // request the permission
-      debugPrint("📣 [Permission] Prompting user for location permission...");
+      debugPrint("prompting user for location permission...");
       var result = await Permission.location.request();
 
       if (result.isGranted) {
