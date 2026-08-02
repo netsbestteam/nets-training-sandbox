@@ -34,18 +34,18 @@ class AuthService {
                 endSessionEndpoint: '$_realmUrl/protocol/openid-connect/logout',
               ),
               scopes: _scopes,
-              allowInsecureConnections: true, // Crucial for HTTP local dev
+              allowInsecureConnections: true,
             ),
           );
 
       debugPrint("Response received from AppAuth");
 
       if (result != null && result.accessToken != null) {
-        debugPrint("💾 [Step 3] Token acquired. Saving securely...");
+        debugPrint("Token acquired. Saving...");
         await _secureStorage.write(key: _tokenKey, value: result.accessToken);
         return result.accessToken;
       } else {
-        debugPrint("[Warning] Authorization finished but token was null.");
+        debugPrint("Authorization finished but token was null.");
       }
     } catch (e, stackTrace) {
       debugPrint("Error: Keycloak Authentication Failed!");

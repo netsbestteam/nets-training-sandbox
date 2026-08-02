@@ -1,7 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-// Import your new service file here
-import 'auth_service.dart';
+import 'services/auth_service.dart';
+import 'services/permission_service.dart'; // IMPORTED: Your permission service file
 
 void main() {
   runApp(const MainApp());
@@ -36,13 +36,27 @@ class _MainAppState extends State<MainApp> {
     setState(() => _isLoading = true);
     try {
       final token = await AuthService.loginWithKeycloak();
+
+      if (token != null) {
+        final bool gpsGranted =
+            await PermissionService.requestLocationPermission();
+
+        if (gpsGranted) {
+          debugPrint("📍 GPS Permission Granted by user.");
+        } else {
+          debugPrint(
+            "⚠️ GPS Permission Denied by user. Proceeding with limited features.",
+          );
+        }
+      }
+
       setState(() {
         _accessToken = token;
       });
     } catch (e) {
       debugPrint("UI Login Error Catch: $e");
     } finally {
-      setState(() => _isLoading = false); // This ensures the app unfreezes
+      setState(() => _isLoading = false);
     }
   }
 
