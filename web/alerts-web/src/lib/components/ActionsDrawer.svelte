@@ -42,7 +42,7 @@
 					return res.json();
 				})
 				.then((data) => {
-					assigned = data.map((item: any) => (item.investigator ? item.investigator : item));
+					assigned = data as Investigator[];
 				})
 				.catch((err) => {
 					logger.error('Error loading assigned investigators:', err);

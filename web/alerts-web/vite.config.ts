@@ -1,11 +1,18 @@
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
+import path from 'path';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	resolve: {
+		alias: {
+			'@shared': path.resolve(__dirname, '../../shared/src'),
+			'@shared-backend': path.resolve(__dirname, '../../shared-backend/src'),
+			'@cloud-runs': path.resolve(__dirname, '../../cloud-runs')
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
@@ -22,7 +29,6 @@ export default defineConfig({
 					exclude: ['src/lib/server/**']
 				}
 			},
-
 			{
 				extends: './vite.config.ts',
 				test: {

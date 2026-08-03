@@ -1,9 +1,10 @@
 import { ALERTS_SERVICE_URL } from '$env/static/private';
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
-import type { Actions } from './$types';
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 import { logger } from '@shared-backend/logger/index';
+import { UpdateAlertStatus } from '@shared/schemas/management';
+
+const baseUrl = ALERTS_SERVICE_URL || 'http://localhost:3001';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user?.token) {
@@ -14,10 +15,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	try {
 		const [alertsRes, investigatorsRes] = await Promise.all([
-			fetch(`${ALERTS_SERVICE_URL}/alerts`, {
+			fetch(`${baseUrl}/alerts`, {
 				headers: { Authorization: `Bearer ${token}` }
 			}),
-			fetch(`http://localhost:3001/investigators`, {
+			fetch(`${baseUrl}/investigators`, {
 				headers: { Authorization: `Bearer ${token}` }
 			})
 		]);
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			investigators
 		};
 	} catch (err) {
-		logger.info('Error connecting to alerts service:' + err);
+		logger.error('Error connecting to alerts service: ' + err);
 		throw error(500, 'Alerts service is currently unavailable');
 	}
 };
@@ -48,18 +49,32 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const alertId = formData.get('alertId');
-		const status = formData.get('status');
+
+		const statusPayload = {
+			status: formData.get('status')
+		};
+
+		if (!alertId) {
+			logger.error('missing alertId payload');
+			return fail(400, { message: 'Missing alert ID' });
+		}
+
+		const result = UpdateAlertStatus.safeParse(statusPayload);
+
+		if (!result.success) {
+			logger.error('Validation failed for alert status updates:' + result.error.flatten());
+			return fail(400, {
+				message: 'Invalid status value provided',
+				errors: result.error.flatten().fieldErrors
+			});
+		}
+
+		const { status } = result.data;
 
 		logger.info(`ATTEMPTING DB UPDATE: Alert ID: ${alertId}, Status: ${status}`);
 
-		if (!alertId || !status) {
-			logger.error('missing alertId or status payload');
-			logger.info(formData);
-			return fail(400, { message: 'Missing alert ID or target status' });
-		}
-
 		try {
-			const url = `http://localhost:3001/alerts/${alertId}/status`;
+			const url = `${baseUrl}/alerts/${alertId}/status`;
 			logger.info(`🔗 Fetching URL: ${url}`);
 
 			const response = await fetch(url, {
@@ -73,14 +88,14 @@ export const actions: Actions = {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				logger.error(`BACKEND API REJECTED UPDATE (${response.status}):` + errorText);
+				logger.error(`BACKEND API REJECTED UPDATE (${response.status}): ` + errorText);
 				return fail(response.status, { errorFromBackend: errorText });
 			}
 
 			logger.info('DATABASE UPDATE SUCCESSFUL AT BACKEND');
 			return { success: true };
 		} catch (error) {
-			logger.error('CRITICAL NETWORK ERROR CONNECTING TO API:' + error);
+			logger.error('CRITICAL NETWORK ERROR CONNECTING TO API: ' + error);
 			return fail(500, { message: 'Internal Server Error' });
 		}
 	}

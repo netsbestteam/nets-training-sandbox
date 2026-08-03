@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logger } from '@shared-backend/logger/index';
+import { ALERTS_SERVICE_URL } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const token = locals.user?.token;
@@ -10,8 +11,9 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 	try {
 		const body = await request.json();
+		const baseUrl = ALERTS_SERVICE_URL || 'http://localhost:3001';
 
-		const response = await fetch(`http://localhost:3001/alerts/${params.id}/assign`, {
+		const response = await fetch(`${baseUrl}/alerts/${params.id}/assign`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

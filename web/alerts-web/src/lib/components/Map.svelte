@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import type * as LeafletNamespace from 'leaflet';
 
+	import 'leaflet/dist/leaflet.css';
+
 	interface Props {
 		items: T[];
 		getLat: (item: T) => number | undefined;
@@ -27,17 +29,24 @@
 	}: Props = $props();
 
 	let mapElement = $state<HTMLDivElement>();
-	let markerLayer: any;
-	let mapInstance: any;
+
+	let mapInstance = $state<LeafletNamespace.Map>();
+	let markerLayer = $state<LeafletNamespace.LayerGroup>();
 	let L = $state<typeof LeafletNamespace>();
 
-	// dictionary to keep track of active marker instances by their ID
-	let markerMap = new Map<string, any>();
+	let markerMap = new Map<string, LeafletNamespace.CircleMarker>();
 
 	onMount(async () => {
 		if (!mapElement) return;
 
 		L = (await import('leaflet')).default;
+		delete (L.Icon.Default.prototype as any)._getIconUrl;
+		L.Icon.Default.mergeOptions({
+			iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+			iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+			shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
+		});
+
 		mapInstance = L.map(mapElement).setView(center, zoom);
 
 		L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -45,17 +54,23 @@
 		}).addTo(mapInstance);
 
 		markerLayer = L.layerGroup().addTo(mapInstance);
+
+		setTimeout(() => {
+			mapInstance?.invalidateSize();
+		}, 50);
 	});
 
 	$effect(() => {
 		const currentLayer = markerLayer;
 		const leaflet = L;
+		const currentItems = items;
 
 		if (!currentLayer || !leaflet) return;
-		currentLayer.clearLayers();
-		markerMap.clear(); // clear local tracking cache on fresh updates
 
-		items.forEach((item) => {
+		currentLayer.clearLayers();
+		markerMap.clear();
+
+		currentItems.forEach((item) => {
 			const lat = getLat(item);
 			const lng = getLng(item);
 
@@ -86,22 +101,18 @@
 
 		if (targetId && map && markerMap.has(targetId)) {
 			const marker = markerMap.get(targetId);
-			const latLng = marker.getLatLng();
+			const latLng = marker!.getLatLng();
 
 			map.flyTo(latLng, 14, {
 				duration: 1.2
 			});
 
 			map.once('moveend', () => {
-				marker.openPopup();
+				marker!.openPopup();
 			});
 		}
 	});
 </script>
-
-<svelte:head>
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</svelte:head>
 
 <div
 	bind:this={mapElement}

@@ -11,10 +11,13 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler",
-    "paths": {
-      "@shared/*": ["../../shared/src/*"],
-      "@shared-backend/*": ["../../shared-backend/src/*"],
-      "@cloud-runs/*": ["../../cloud-runs/*"]
-    }
+		"types": ["svelte"],
+		"paths": {
+			"$lib": ["./src/lib"],
+			"$lib/*": ["./src/lib/*"],
+			"@shared/*": ["../../shared/src/*"],
+			"@shared-backend/*": ["../../shared-backend/src/*"],
+			"@cloud-runs/*": ["../../cloud-runs/*"]
+		}
 	}
 }

@@ -1,6 +1,8 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { logger } from '@shared-backend/logger/index';
+import { env } from '$env/dynamic/public';
+import { ALERTS_SERVICE_URL } from '$env/static/private';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const token = locals.user?.token;
@@ -9,14 +11,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 
 	try {
-		const response = await fetch(
-			`http://localhost:3001/investigators/${params.alertId}/investigators`,
-			{
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
+		const baseUrl = ALERTS_SERVICE_URL || 'http://localhost:3001';
+
+		const response = await fetch(`${baseUrl}/investigators/${params.alertId}/investigators`, {
+			headers: {
+				Authorization: `Bearer ${token}`
 			}
-		);
+		});
 
 		if (!response.ok) {
 			throw error(response.status, 'Failed to fetch assigned investigators');

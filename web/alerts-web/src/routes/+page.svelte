@@ -13,12 +13,6 @@
 
 	const alerts = createAlertsStore(data.alerts);
 
-	$effect(() => {
-		if (data.alerts) {
-			alerts.setAlerts(data.alerts);
-		}
-	});
-
 	let activeFilter = $state<string | null>(null);
 	let searchQuery = $state('');
 
@@ -57,8 +51,14 @@
 		alerts.all.filter((a) => a.severity === 5 && a.status === 'open').length
 	);
 
-	const getSeverityColor = (a: Alert) =>
-		['#10b981', '#10b981', '#3b82f6', '#f97316', '#f97316', '#ef4444'][a.severity] || '#10b981';
+	const getSeverityColor = (a: Alert) => {
+		const colors = ['#10b981', '#10b981', '#3b82f6', '#f97316', '#f97316', '#ef4444'];
+		if (a.severity >= 0 && a.severity < colors.length) {
+			return colors[a.severity];
+		}
+		return '#10b981'; // default color
+	};
+
 	const getAlertPopup = (a: Alert) =>
 		`<div style="color: #18181b; font-size: 12px;">
         <strong>Camera ID:</strong> ${a.camera_id} <br />
