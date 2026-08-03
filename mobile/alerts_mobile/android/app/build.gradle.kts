@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // Updated to prevent redirect loopback mismatches with appAuth
-        applicationId = "com.example.nets_sandbox"
+        applicationId = "com.alerts.nets_sandbox"
         
         minSdk = flutter.minSdkVersion
         targetSdk = 35 // Aligned with compileSdk 35
