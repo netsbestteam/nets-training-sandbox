@@ -10,7 +10,7 @@ const config = {
 		adapter: adapter(),
 
 		alias: {
-			'#shared/backend': path.resolve('../../shared-backend/src')
+			'@shared-backend': path.resolve('../../shared-backend/src')
 		}
 	}
 };

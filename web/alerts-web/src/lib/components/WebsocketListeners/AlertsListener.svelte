@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import { logger } from '#shared/backend/logger/index';
+	import { logger } from '@shared-backend/logger/index';
 
 	interface Props {
 		store: { add: (data: any) => void };

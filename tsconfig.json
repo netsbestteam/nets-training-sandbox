@@ -11,6 +11,13 @@
 
     // Bundler mode
     "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@shared/*": ["shared/src/*"],
+      "@shared-backend/*": ["shared-backend/src/*"],
+      "@cloud-runs/*": ["cloud-runs/*"]
+    },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,

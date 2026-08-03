@@ -1,10 +1,10 @@
 import Elysia from "elysia";
-import { logger } from "../../../../shared-backend/src/logger";
-import { db } from "../../../../shared-backend/src/db";
+import { logger } from "@shared-backend/logger";
+import { db } from "@shared-backend/db";
 import {
   alert_assignments,
   investigators,
-} from "../../../../shared-backend/src/db/schema";
+} from "@shared-backend/db/schema";
 import { eq } from "drizzle-orm";
 
 export const investigatorRoutes = new Elysia({ prefix: "/investigators" })

@@ -1,6 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { logger } from '#shared/backend/logger/index';
+import { logger } from '@shared-backend/logger/index';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const token = locals.user?.token;

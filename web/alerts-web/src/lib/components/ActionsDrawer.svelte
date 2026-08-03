@@ -2,7 +2,7 @@
 	import { Drawer } from 'vaul-svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { logger } from '#shared/backend/logger/index';
+	import { logger } from '@shared-backend/logger/index';
 	import type { Alert } from './TableColumns/AlertsColumns';
 
 	export interface Investigator {

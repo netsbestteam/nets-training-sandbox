@@ -6,8 +6,8 @@ import {
   connection,
   startWebSocketConsumer,
 } from "./plugins/connection.plugin";
-import { logger } from "../../../shared-backend/src/logger";
-import { setupJetStream } from "../../dispatcher-service/nats/setup.plugin";
+import { logger } from "@shared-backend/logger";
+import { setupJetStream } from "@cloud-runs/dispatcher-service/nats/setup.plugin";
 import cors from "@elysiajs/cors";
 import { investigatorRoutes } from "./plugins/investigators.plugin";
 

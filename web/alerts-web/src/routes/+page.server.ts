@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { logger } from '#shared/backend/logger';
+import { logger } from '@shared-backend/logger/index';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user?.token) {

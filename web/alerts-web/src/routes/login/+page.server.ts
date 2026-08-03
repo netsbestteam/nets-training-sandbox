@@ -2,7 +2,7 @@ import { redirect, error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { KEYCLOAK_ID, KEYCLOAK_ISSUER } from '$env/static/private';
 import { dev } from '$app/environment';
-import { logger } from '#shared/backend/logger';
+import { logger } from '@shared-backend/logger/index';
 
 // helper function to create PKCE
 function generateVerifier(): string {

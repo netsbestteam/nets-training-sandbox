@@ -1,4 +1,4 @@
-import { logger } from '#shared/backend/logger';
+import { logger } from '@shared-backend/logger/index';
 import { PUBLIC_ALERTS_WEBSOCKET_URL } from '$env/static/public';
 import type { RequestHandler } from './$types';
 import WSModule from 'ws';

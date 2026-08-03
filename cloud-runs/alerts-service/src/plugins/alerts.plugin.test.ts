@@ -27,14 +27,14 @@ vi.mock("jose", () => {
 });
 
 // mock nats jetstream instead of a real running nats server
-vi.mock("../../../dispatcher-service/nats/nats.plugin", () => ({
+vi.mock("@cloud-runs/dispatcher-service/nats/nats.plugin", () => ({
   js: {
     publish: vi.fn().mockResolvedValue({ sequence: 1 }),
   },
 }));
 
 // mock the db connection
-vi.mock("../../../../shared-backend/src/db", () => ({
+vi.mock("@shared-backend/db", () => ({
   db: {
     select: vi.fn().mockReturnThis(),
     from: vi
@@ -211,7 +211,7 @@ describe("check alerts API with auth mocking", () => {
 
   describe("test error handling edge cases", () => {
     test("GET /alerts - handle internal database catch block branch", async () => {
-      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      const { db } = (await import("@shared-backend/db")) as any;
       db.from.mockRejectedValueOnce(new Error("Database disconnected"));
 
       const response = await app.handle(
@@ -224,7 +224,7 @@ describe("check alerts API with auth mocking", () => {
     });
 
     test("POST /alerts - handle internal database catch block branch", async () => {
-      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      const { db } = (await import("@shared-backend/db")) as any;
       db.insert.mockReturnValueOnce({
         values: vi.fn().mockReturnThis(),
         returning: vi
@@ -247,7 +247,7 @@ describe("check alerts API with auth mocking", () => {
     });
 
     test("PATCH /alerts/:id/status - handle database update catch block branch", async () => {
-      const { db } = (await import("../../../../shared-backend/src/db")) as any;
+      const { db } = (await import("@shared-backend/db")) as any;
       db.update.mockReturnValueOnce({
         set: vi.fn().mockReturnThis(),
         where: vi

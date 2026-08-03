@@ -3,16 +3,16 @@ import {
   AlertAssignment,
   AlertSchema,
   UpdateAlertStatus,
-} from "../../../../shared/src/schemas/management";
-import { db } from "../../../../shared-backend/src/db";
+} from "@shared/schemas/management";
+import { db } from "@shared-backend/db";
 import {
   alert_assignments,
   alerts,
-} from "../../../../shared-backend/src/db/schema";
+} from "@shared-backend/db/schema";
 import { eq } from "drizzle-orm";
-import { logger } from "../../../../shared-backend/src/logger";
-import { js } from "../../../dispatcher-service/nats/nats.plugin";
-import { AlertEvents } from "../../../../shared/src/events";
+import { logger } from "@shared-backend/logger";
+import { js } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "@shared/events";
 import { JSONCodec } from "nats";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
