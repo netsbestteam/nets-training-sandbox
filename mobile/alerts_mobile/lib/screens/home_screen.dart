@@ -1,8 +1,10 @@
+// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/location_provider.dart';
+import '../services/alerts_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -27,24 +29,65 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _triggerEmergencyReport(LatLng? location) {
+  void _triggerEmergencyReport(LatLng? location) async {
+    if (location == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot send report: Location data not available.'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     debugPrint("EMERGENCY BUTTON PRESSED");
     debugPrint(
-      "Current coordinates sent: ${location?.latitude}, ${location?.longitude}",
+      "Current coordinates sent: ${location.latitude}, ${location.longitude}",
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Emergency report sent!'),
-        backgroundColor: Colors.red,
+        content: Text('Broadcasting emergency alert...'),
+        duration: Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    bool isSuccess = await AlertService.sendEmergencyAlert(
+      latitude: location.latitude,
+      longitude: location.longitude,
+      token: widget.accessToken,
+    );
+
+    // guard against context changes if the widget unmounted while waiting for the network
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isSuccess ? Icons.check_circle : Icons.error_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              isSuccess
+                  ? 'Emergency report sent successfully!'
+                  : 'Failed to send report. Backend error.',
+            ),
+          ],
+        ),
+        backgroundColor: isSuccess ? Colors.green : Colors.red[900],
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen directly to the location provider changes
     final locationProvider = context.watch<LocationProvider>();
 
     return Scaffold(
