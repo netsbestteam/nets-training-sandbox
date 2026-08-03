@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { logger } from '@shared-backend/logger/index';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { Alert } from './TableColumns/AlertsColumns';
 
 	export interface Investigator {
@@ -30,10 +31,15 @@
 	let assigned = $state<Investigator[]>([]);
 	let dropdownOpen = $state(false);
 
+	// states for form status updates
+	let statusError = $state<string | null>(null);
+	let isUpdatingStatus = $state(false);
+
 	$effect(() => {
 		if (alert) {
 			assigned = [];
 			dropdownOpen = false;
+			statusError = null; // Clear any previous form errors on drawer open
 
 			// fetch investigators for the alert
 			fetch(`/api/investigators/${alert.alert_id}/investigators`)
@@ -51,6 +57,7 @@
 		} else {
 			assigned = [];
 			dropdownOpen = false;
+			statusError = null;
 		}
 	});
 
@@ -90,7 +97,7 @@
 
 			if (!response.ok) throw new Error('Failed to save');
 
-			// reaload to get fresh data
+			// reload to get fresh data
 			await invalidateAll();
 
 			open = false;
@@ -100,6 +107,39 @@
 			isSaving = false;
 		}
 	}
+
+	// Handled in a separate extracted function for use:enhance
+	const handleStatusEnhance: SubmitFunction = ({ submitter }) => {
+		const targetButton = submitter as HTMLButtonElement | null;
+		const submittedStatus = targetButton?.value || '';
+
+		isUpdatingStatus = true;
+		statusError = null;
+
+		return async ({ result, update }) => {
+			try {
+				if (result.type === 'success') {
+					if (alert && submittedStatus) {
+						onstatusupdate(alert.alert_id, submittedStatus);
+					}
+					await invalidateAll();
+					open = false;
+				} else if (result.type === 'failure') {
+					statusError =
+						(result.data?.message as string) ||
+						(result.data?.errorFromBackend as string) ||
+						'Failed to update status. Please try again.';
+					logger.error('Status update failed:' + result.data);
+				} else if (result.type === 'error') {
+					statusError = 'A server error occurred. Please try again later.';
+					logger.error('Server error during status update:', result.error);
+				}
+			} finally {
+				isUpdatingStatus = false;
+				await update({ reset: false });
+			}
+		};
+	};
 </script>
 
 <Drawer.Root bind:open>
@@ -150,41 +190,34 @@
 					{/if}
 
 					<!-- status management -->
-					<form
-						method="POST"
-						action="?/updateStatus"
-						use:enhance={({ submitter }) => {
-							const targetButton = submitter as HTMLButtonElement | null;
-							const submittedStatus = targetButton?.value || '';
-							return async ({ result, update }) => {
-								if (result.type === 'success') {
-									if (alert && submittedStatus) onstatusupdate(alert.alert_id, submittedStatus);
-
-									await invalidateAll();
-									open = false;
-								}
-								await update({ reset: false });
-							};
-						}}
-					>
+					<form method="POST" action="?/updateStatus" use:enhance={handleStatusEnhance}>
 						<input type="hidden" name="alertId" value={alert.alert_id} />
+
+						{#if statusError}
+							<p class="mb-2 text-xs font-medium text-red-400">{statusError}</p>
+						{/if}
+
 						{#if alert.status === 'open' || alert.status === 'active'}
 							<button
 								type="submit"
 								name="status"
 								value="closed"
-								class="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-zinc-800"
+								disabled={isUpdatingStatus}
+								class="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-zinc-800 disabled:opacity-50"
 							>
-								<span class="h-2 w-2 rounded-full bg-red-500"></span> Close Alert
+								<span class="h-2 w-2 rounded-full bg-red-500"></span>
+								{isUpdatingStatus ? 'Closing...' : 'Close Alert'}
 							</button>
 						{:else}
 							<button
 								type="submit"
 								name="status"
 								value="open"
-								class="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-zinc-800"
+								disabled={isUpdatingStatus}
+								class="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-emerald-400 transition-colors hover:bg-zinc-800 disabled:opacity-50"
 							>
-								<span class="h-2 w-2 rounded-full bg-emerald-500"></span> Set Open
+								<span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+								{isUpdatingStatus ? 'Opening...' : 'Set Open'}
 							</button>
 						{/if}
 					</form>
@@ -280,9 +313,10 @@
 						<button
 							type="button"
 							onclick={handleAssignSubmit}
+							disabled={isSaving}
 							class="h-[48px] flex-1 rounded-xl bg-red-600 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-40 disabled:hover:bg-red-700"
 						>
-							Save Assignments
+							{isSaving ? 'Saving...' : 'Save Assignments'}
 						</button>
 					</div>
 				</div>

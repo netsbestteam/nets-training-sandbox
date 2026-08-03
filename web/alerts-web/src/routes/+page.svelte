@@ -83,6 +83,12 @@
 	}
 
 	let focusedAlertId = $state<string | null>(null);
+
+	$effect(() => {
+		if (data.alerts) {
+			alerts.all = data.alerts;
+		}
+	});
 </script>
 
 <AlertsListener store={alerts} />
