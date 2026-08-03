@@ -1,8 +1,8 @@
-// lib/screens/sandbox_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import '../providers/location_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -19,41 +19,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  LatLng? _currentLocation;
-  bool _isLoadingLocation = true;
-
   @override
   void initState() {
     super.initState();
-    _fetchCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LocationProvider>().initLocationFlow();
+    });
   }
 
-  Future<void> _fetchCurrentLocation() async {
-    try {
-      debugPrint("fetching location...");
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _currentLocation = LatLng(position.latitude, position.longitude);
-        _isLoadingLocation = false;
-      });
-      debugPrint(
-        "location acquired: ${position.latitude}, ${position.longitude}",
-      );
-    } catch (e) {
-      debugPrint("error getting location: $e");
-      // fallback location (tel aviv)
-      setState(() {
-        _currentLocation = const LatLng(32.0853, 34.7818);
-        _isLoadingLocation = false;
-      });
-    }
-  }
-
-  void _triggerEmergencyReport() {
+  void _triggerEmergencyReport(LatLng? location) {
     debugPrint("EMERGENCY BUTTON PRESSED");
+    debugPrint(
+      "Current coordinates sent: ${location?.latitude}, ${location?.longitude}",
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -66,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen directly to the location provider changes
+    final locationProvider = context.watch<LocationProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
@@ -76,11 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _isLoadingLocation
+      body: locationProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : FlutterMap(
               options: MapOptions(
-                initialCenter: _currentLocation!,
+                initialCenter: locationProvider.currentLocation!,
                 initialZoom: 15.0,
               ),
               children: [
@@ -91,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MarkerLayer(
                   markers: [
                     Marker(
-                      point: _currentLocation!,
+                      point: locationProvider.currentLocation!,
                       width: 60,
                       height: 60,
                       child: const Icon(
@@ -105,8 +86,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _triggerEmergencyReport,
-        backgroundColor: Colors.redAccent,
+        onPressed: () =>
+            _triggerEmergencyReport(locationProvider.currentLocation),
+        backgroundColor: Colors.blueAccent,
         icon: const Icon(
           Icons.warning_amber_rounded,
           color: Colors.white,
