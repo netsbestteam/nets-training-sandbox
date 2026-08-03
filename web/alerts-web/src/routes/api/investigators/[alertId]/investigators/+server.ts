@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { logger } from '#shared/backend/logger';
 
 export const GET: RequestHandler = async ({ params, locals }) => {
 	const token = locals.user?.token;
@@ -25,7 +26,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 		return json(data);
 	} catch (err) {
-		console.error('Error fetching alert investigators:', err);
+		logger.error('Error fetching alert investigators:' + err);
 		throw error(500, 'Internal Server Error');
 	}
 };

@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { logger } from '#shared/backend/logger/index';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const token = locals.user?.token;
@@ -27,7 +28,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		return json({ success: true });
 	} catch (err) {
-		console.error('Proxy assignment error:', err);
+		logger.error('Proxy assignment error:' + err);
 		throw error(500, 'Internal Server Error');
 	}
 };

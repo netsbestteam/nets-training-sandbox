@@ -1,3 +1,4 @@
+import { logger } from '#shared/backend/logger';
 import { PUBLIC_ALERTS_WEBSOCKET_URL } from '$env/static/public';
 import type { RequestHandler } from './$types';
 import WSModule from 'ws';
@@ -11,7 +12,7 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 
 	const stream = new ReadableStream({
 		start(controller) {
-			console.log('connecting to the websocket services');
+			logger.info('connecting to the websocket services');
 
 			let secureSocket: any = null;
 
@@ -25,7 +26,7 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 				});
 
 				secureSocket.on('open', () => {
-					console.log('connected');
+					logger.info('connected');
 				});
 
 				secureSocket.on('message', (data: any) => {
@@ -37,20 +38,20 @@ export const GET: RequestHandler = async ({ locals, cookies }) => {
 				});
 
 				secureSocket.on('close', () => {
-					console.log('disconnected');
+					logger.info('disconnected');
 					try {
 						controller.close();
 					} catch (e) {}
 				});
 
 				secureSocket.on('error', (err: any) => {
-					console.error('error:', err);
+					logger.error('error:', err);
 					try {
 						controller.close();
 					} catch (e) {}
 				});
 			} catch (initErr) {
-				console.error('Initialization error:', initErr);
+				logger.error('Initialization error:' + initErr);
 				try {
 					controller.close();
 				} catch (e) {}

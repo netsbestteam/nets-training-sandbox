@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Drawer } from 'vaul-svelte';
 	import { enhance } from '$app/forms';
-	import type { Alert } from '$lib/components/TableColumns/AlertsColumns';
 	import { invalidateAll } from '$app/navigation';
+	import { logger } from '#shared/backend/logger/index';
+	import type { Alert } from './TableColumns/AlertsColumns';
 
 	export interface Investigator {
 		investigator_id: string;
@@ -44,7 +45,7 @@
 					assigned = data.map((item: any) => (item.investigator ? item.investigator : item));
 				})
 				.catch((err) => {
-					console.error('Error loading assigned investigators:', err);
+					logger.error('Error loading assigned investigators:', err);
 					assigned = [];
 				});
 		} else {
@@ -77,7 +78,7 @@
 		if (!alert) return;
 		isSaving = true;
 
-		console.log(assigned);
+		logger.info(assigned);
 		try {
 			const response = await fetch(`/api/alerts/${alert.alert_id}/assign`, {
 				method: 'POST',
@@ -94,7 +95,7 @@
 
 			open = false;
 		} catch (err) {
-			console.error('Failed to assign investigators:', err);
+			logger.error('Failed to assign investigators: ' + err);
 		} finally {
 			isSaving = false;
 		}

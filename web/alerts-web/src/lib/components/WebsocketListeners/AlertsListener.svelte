@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import { logger } from '#shared/backend/logger/index';
 
 	interface Props {
 		store: { add: (data: any) => void };
@@ -16,7 +17,7 @@
 				const parsed = JSON.parse(event.data);
 				store.add(parsed);
 			} catch (err) {
-				console.error('Failed to process incoming stream payload:', err);
+				logger.error('Failed to process incoming stream payload:' + err);
 			}
 		};
 	});

@@ -3,6 +3,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { logger } from '#shared/backend/logger';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user?.token) {
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			investigators
 		};
 	} catch (err) {
-		console.log('Error connecting to alerts service:', err);
+		logger.info('Error connecting to alerts service:' + err);
 		throw error(500, 'Alerts service is currently unavailable');
 	}
 };
@@ -41,7 +42,7 @@ export const actions: Actions = {
 		const token = locals.user?.token;
 
 		if (!token) {
-			console.error('no token found in locals.user');
+			logger.error('no token found in locals.user');
 			return fail(401, { message: 'Unauthorized: Session missing token' });
 		}
 
@@ -49,17 +50,17 @@ export const actions: Actions = {
 		const alertId = formData.get('alertId');
 		const status = formData.get('status');
 
-		console.log(`ATTEMPTING DB UPDATE: Alert ID: ${alertId}, Status: ${status}`);
+		logger.info(`ATTEMPTING DB UPDATE: Alert ID: ${alertId}, Status: ${status}`);
 
 		if (!alertId || !status) {
-			console.error('missing alertId or status payload');
-			console.log(formData);
+			logger.error('missing alertId or status payload');
+			logger.info(formData);
 			return fail(400, { message: 'Missing alert ID or target status' });
 		}
 
 		try {
 			const url = `http://localhost:3001/alerts/${alertId}/status`;
-			console.log(`🔗 Fetching URL: ${url}`);
+			logger.info(`🔗 Fetching URL: ${url}`);
 
 			const response = await fetch(url, {
 				method: 'PATCH',
@@ -72,14 +73,14 @@ export const actions: Actions = {
 
 			if (!response.ok) {
 				const errorText = await response.text();
-				console.error(`BACKEND API REJECTED UPDATE (${response.status}):`, errorText);
+				logger.error(`BACKEND API REJECTED UPDATE (${response.status}):` + errorText);
 				return fail(response.status, { errorFromBackend: errorText });
 			}
 
-			console.log('DATABASE UPDATE SUCCESSFUL AT BACKEND');
+			logger.info('DATABASE UPDATE SUCCESSFUL AT BACKEND');
 			return { success: true };
 		} catch (error) {
-			console.error('CRITICAL NETWORK ERROR CONNECTING TO API:', error);
+			logger.error('CRITICAL NETWORK ERROR CONNECTING TO API:' + error);
 			return fail(500, { message: 'Internal Server Error' });
 		}
 	}
