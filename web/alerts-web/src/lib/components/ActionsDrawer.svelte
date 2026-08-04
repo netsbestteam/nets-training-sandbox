@@ -108,7 +108,7 @@
 		}
 	}
 
-	// Handled in a separate extracted function for use:enhance
+	// handled in a separate extracted function for use:enhance
 	const handleStatusEnhance: SubmitFunction = ({ submitter }) => {
 		const targetButton = submitter as HTMLButtonElement | null;
 		const submittedStatus = targetButton?.value || '';
