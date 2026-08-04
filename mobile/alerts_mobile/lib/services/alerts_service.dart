@@ -1,4 +1,4 @@
-// lib/services/alert_service.dart
+// lib/services/alerts_service.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +12,8 @@ class AlertService {
     required double latitude,
     required double longitude,
     required String token,
+    required int severity,
+    required String alertType,
   }) async {
     final url = Uri.parse('$_baseUrl/alerts');
 
@@ -25,7 +27,8 @@ class AlertService {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          "severity": 5,
+          "alert_type": alertType,
+          "severity": severity,
           "status": "open",
           "location": {"x": longitude, "y": latitude},
         }),

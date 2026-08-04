@@ -30,6 +30,8 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     async ({ body, server }) => {
       try {
         logger.info("Attempting POST new alert");
+
+        console.log(body);
         const inserted = await db
           .insert(alerts)
           .values(body)
