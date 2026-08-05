@@ -1,10 +1,10 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/location_provider.dart';
 import '../services/alerts_service.dart';
+import '../widgets/emergency_dialog.dart';
+import '../widgets/map_view.dart';
 
 class HomeScreen extends StatefulWidget {
   final String accessToken;
@@ -29,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Opens the dialog form to collect alert_type and severity level
   void _showEmergencyDialog(LatLng? location) {
     if (location == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -42,159 +41,18 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final formKey = GlobalKey<FormState>();
-    final typeController = TextEditingController();
-    int selectedSeverity = 5; // Default highest severity level
-
     showDialog(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                  SizedBox(width: 8),
-                  Text('New Emergency Alert'),
-                ],
-              ),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Alert Type Input
-                    TextFormField(
-                      controller: typeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Alert Type',
-                        hintText: 'e.g., Fire, Medical, Intruder',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter an alert type';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Severity Selector Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Severity Level:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        Text(
-                          '$selectedSeverity - ${sevLabels[selectedSeverity]}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-
-                    // 1-5 Number Buttons Selector
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(5, (index) {
-                        int level = index + 1;
-                        bool isSelected = selectedSeverity == level;
-
-                        return SizedBox(
-                          width: 42,
-                          height: 42,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              backgroundColor: isSelected
-                                  ? Colors.redAccent
-                                  : Colors.transparent,
-                              foregroundColor: isSelected
-                                  ? Colors.white
-                                  : Colors.black87,
-                              side: BorderSide(
-                                color: isSelected
-                                    ? Colors.redAccent
-                                    : Colors.grey.shade400,
-                                width: isSelected ? 2 : 1,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
-                              setDialogState(() {
-                                selectedSeverity = level;
-                              });
-                            },
-                            child: Text(
-                              '$level',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (formKey.currentState!.validate()) {
-                      final alertType = typeController.text.trim();
-                      Navigator.of(dialogContext).pop(); // Close modal
-                      _submitEmergencyReport(
-                        location: location,
-                        alertType: alertType,
-                        severity: selectedSeverity,
-                      );
-                    }
-                  },
-                  child: const Text('Send Alert'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => EmergencyDialog(
+        onSubmit: (alertType, severity) => _submitEmergencyReport(
+          location: location,
+          alertType: alertType,
+          severity: severity,
+        ),
+      ),
     );
   }
 
-  /// Helper map for human-readable severity descriptions
-  static const Map<int, String> sevLabels = {
-    1: 'Minor',
-    2: 'Low',
-    3: 'Moderate',
-    4: 'High',
-    5: 'Critical',
-  };
-
-  /// Dispatches the final network call
   void _submitEmergencyReport({
     required LatLng location,
     required String alertType,
@@ -257,32 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: locationProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : FlutterMap(
-              options: MapOptions(
-                initialCenter: locationProvider.currentLocation!,
-                initialZoom: 15.0,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.alerts.nets_sandbox',
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: locationProvider.currentLocation!,
-                      width: 60,
-                      height: 60,
-                      child: const Icon(
-                        Icons.my_location,
-                        color: Colors.blueAccent,
-                        size: 40,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          : MapView(currentLocation: locationProvider.currentLocation!),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showEmergencyDialog(locationProvider.currentLocation),
         backgroundColor: Colors.blueAccent,
