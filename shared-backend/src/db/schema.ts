@@ -68,18 +68,22 @@ export const alerts = cameraSchema.table(
 );
 
 export const investigators = cameraSchema.table("investigators", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  investigatorId: uuid("investigator_id").primaryKey().defaultRandom(),
   full_name: text().notNull(),
   team: text(),
   isActive: boolean().notNull(),
+  keycloakId: text("keycloak_id"),
 });
 
 export const alert_assignments = cameraSchema.table(
   "alert_assignments",
   {
-    investigatorId: uuid("investigator_id").references(() => investigators.id, {
-      onDelete: "restrict",
-    }),
+    investigatorId: uuid("investigator_id").references(
+      () => investigators.investigatorId,
+      {
+        onDelete: "restrict",
+      },
+    ),
     alertId: uuid("alert_id").references(() => alerts.alert_id, {
       onDelete: "cascade",
     }),

@@ -32,7 +32,7 @@ export const UpdateAlertStatus = z.object({
 });
 
 export const AlertAssignment = z.object({
-  investigatorId: z.uuid(),
+  investigatorIds: z.array(z.string()),
 });
 
 export type AlertInput = z.infer<typeof AlertSchema>;

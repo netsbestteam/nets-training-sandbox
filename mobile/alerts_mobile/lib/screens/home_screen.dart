@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../providers/location_provider.dart';
 import '../services/alerts_service.dart';
+import '../services/websocket_service.dart';
 import '../widgets/emergency_dialog.dart';
 import '../widgets/map_view.dart';
 
@@ -21,12 +24,82 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late final WebSocketService _webSocketService;
+  String? _keycloakId;
+
   @override
   void initState() {
     super.initState();
+    _webSocketService = WebSocketService();
+    _extractKeycloakId();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<LocationProvider>().initLocationFlow();
+      _initWebSocket();
     });
+  }
+
+  void _extractKeycloakId() {
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.accessToken);
+      _keycloakId = decodedToken['sub'];
+    } catch (e) {
+      debugPrint('Error decoding Keycloak token: $e');
+    }
+  }
+
+  void _initWebSocket() {
+    if (_keycloakId == null) {
+      debugPrint('Cannot connect WebSocket: keycloak_id is null');
+      return;
+    }
+
+    final wsBaseUrl = dotenv.env['WS_BASE_URL'] ?? 'ws://10.0.2.2:3001/socket';
+
+    _webSocketService.connect(
+      wsUrl: '$wsBaseUrl?token=${widget.accessToken}',
+      currentKeycloakId: _keycloakId!,
+      onAssignmentReceived: (alertType, x, y) {
+        _showAssignmentPopup(alertType, x, y);
+      },
+    );
+  }
+
+  void _showAssignmentPopup(String alertType, double x, double y) {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        actionsAlignment: MainAxisAlignment.center,
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.center, // Centers title elements
+          children: [
+            Icon(Icons.assignment_turned_in, color: Colors.redAccent, size: 28),
+            SizedBox(width: 8),
+            Text('New alert!'),
+          ],
+        ),
+        content: Text(
+          'You have been assigned to handle an alert of type $alertType at location ($x, $y)!',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center, // Centers content body text
+          textDirection: TextDirection.ltr,
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEmergencyDialog(LatLng? location) {
@@ -97,6 +170,12 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(seconds: 4),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _webSocketService.disconnect();
+    super.dispose();
   }
 
   @override

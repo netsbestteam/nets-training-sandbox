@@ -8,8 +8,9 @@ import { db } from "../../../../shared-backend/src/db";
 import {
   alert_assignments,
   alerts,
+  investigators,
 } from "../../../../shared-backend/src/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { logger } from "../../../../shared-backend/src/logger";
 import { js } from "../../../dispatcher-service/nats/nats.plugin";
 import { AlertEvents } from "../../../../shared/src/events";
@@ -31,7 +32,6 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
       try {
         logger.info("Attempting POST new alert");
 
-        console.log(body);
         const inserted = await db
           .insert(alerts)
           .values(body)
@@ -80,25 +80,63 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     },
     { body: UpdateAlertStatus },
   )
+
   .post(
     "/:id/assign",
-    async ({ params, body }) => {
+    async ({ params, body, server }) => {
       try {
         logger.info("Attempting POST new alert assignment...");
 
-        await db.insert(alert_assignments).values({
-          investigatorId: body.investigatorId,
-          alertId: params.id,
-        });
+        const [alertRecord] = await db
+          .select()
+          .from(alerts)
+          .where(eq(alerts.alert_id, params.id));
 
-        // Publish event to jetstream
-        await js.publish(
-          AlertEvents.Assigned,
-          JSONCodec().encode({
-            investigatorId: body.investigatorId,
+        if (!alertRecord) {
+          return { error: "Alert not found" };
+        }
+
+        // fetch assigned investigators to get both DB ID and Keycloak ID
+        const assignedInvestigators = await db
+          .select({
+            id: investigators.investigatorId,
+            keycloakId: investigators.keycloakId,
+          })
+          .from(investigators)
+          .where(inArray(investigators.investigatorId, body.investigatorIds));
+
+        const assignmentsToInsert = body.investigatorIds.map(
+          (investigatorId) => ({
+            investigatorId: investigatorId,
             alertId: params.id,
           }),
         );
+
+        await db.insert(alert_assignments).values(assignmentsToInsert);
+
+        for (const investigator of assignedInvestigators) {
+          const targetKeycloakId =
+            investigator.keycloakId ?? String(investigator.id);
+
+          const payload = {
+            event: AlertEvents.Assigned,
+            payload: {
+              investigatorId: targetKeycloakId,
+              alertId: params.id,
+              alertType: alertRecord.alert_type ?? alertRecord.alert_id,
+              location: alertRecord.location,
+            },
+          };
+
+          // Publish to NATS JetStream
+          await js.publish(
+            AlertEvents.Assigned,
+            JSONCodec().encode(payload.payload),
+          );
+
+          // Broadcast directly to WebSocket clients
+          server?.publish("alerts", JSON.stringify(payload));
+        }
 
         return { data: body };
       } catch (e: unknown) {
