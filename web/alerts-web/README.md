@@ -1,42 +1,30 @@
-# sv
+# nets-monorepo
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+To install dependencies:
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
+```bash
+bun install
 ```
 
-To recreate this project with the same configuration:
+To run:
 
-```sh
-# recreate this project
-bun x sv@0.16.3 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" tailwindcss="plugins:none" --install bun alerts-web
+```bash
+bun run index.ts
 ```
 
-## Developing
+To run the docker images:
+docker-compose up
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+nats:
+cd cloud-runs/dispatcher-service/nats
+docker-compose up
 
-```sh
-npm run dev
+To run cloud-runs services:
+bun run cloud-runs/alerts-service/src/index.ts
+bun run cloud-runs/dispatcher-service/alerts-consumer/src/index.ts
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+to run the web app:
+cd web/alerts-web
+bun run dev
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
