@@ -11,8 +11,7 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const alerts = createAlertsStore(data.alerts);
-
+	let alerts = $derived(createAlertsStore(data.alerts));
 	let activeFilter = $state<string | null>(null);
 	let searchQuery = $state('');
 
@@ -83,12 +82,6 @@
 	}
 
 	let focusedAlertId = $state<string | null>(null);
-
-	$effect(() => {
-		if (data.alerts) {
-			alerts.all = data.alerts;
-		}
-	});
 </script>
 
 <AlertsListener store={alerts} />

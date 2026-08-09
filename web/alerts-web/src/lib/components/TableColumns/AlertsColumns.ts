@@ -18,13 +18,13 @@ const SEVERITY_MAP: Record<number, { label: string; classes: string }> = {
 	5: { label: '5 - Critical', classes: 'bg-red-500/10 text-red-400 ring-red-500/20' }
 };
 
-export const columns: ColumnDef<Alert, any>[] = [
+export const columns: ColumnDef<Alert, unknown>[] = [
 	{
 		accessorKey: 'severity',
 		header: 'SEVERITY',
 		enableSorting: true,
 		cell: (info) => {
-			const value = Number(info.getValue());
+			const value = Number(info.getValue() ?? 0);
 
 			const config = SEVERITY_MAP[value] || {
 				label: `${value} - Unknown`,
@@ -39,7 +39,7 @@ export const columns: ColumnDef<Alert, any>[] = [
 		header: 'DATE',
 		enableSorting: true,
 		cell: (info) => {
-			const raw = info.getValue();
+			const raw = info.getValue() as string | undefined;
 			if (!raw) return '';
 
 			const [datePart, timePart] = raw.split('T');
@@ -54,15 +54,17 @@ export const columns: ColumnDef<Alert, any>[] = [
 		accessorKey: 'alert_type',
 		header: 'TYPE',
 		enableSorting: true,
-		cell: (info) =>
-			`<span class="font-mono text-xs text-zinc-400 block truncate max-w-[150px]">${info.getValue()}</span>`
+		cell: (info) => {
+			const val = (info.getValue() as string | null) ?? '';
+			return `<span class="font-mono text-xs text-zinc-400 block truncate max-w-[150px]">${val}</span>`;
+		}
 	},
 	{
 		accessorKey: 'status',
 		header: 'STATUS',
 		enableSorting: true,
 		cell: (info) => {
-			const currentStatus = info.getValue() as string;
+			const currentStatus = String(info.getValue() ?? '');
 			const isOpen = currentStatus === 'open' || currentStatus === 'active';
 
 			const label = isOpen ? 'Open' : 'Closed';
