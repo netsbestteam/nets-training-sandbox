@@ -3,9 +3,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/location_provider.dart';
 import '../services/alerts_service.dart';
 import '../services/websocket_service.dart';
+import '../utils/snackbar_utils.dart';
+import '../widgets/assignment_dialog.dart';
 import '../widgets/emergency_dialog.dart';
 import '../widgets/map_view.dart';
 
@@ -24,13 +27,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late final WebSocketService _webSocketService;
+  final WebSocketService _webSocketService = WebSocketService();
   String? _keycloakId;
 
   @override
   void initState() {
     super.initState();
-    _webSocketService = WebSocketService();
     _extractKeycloakId();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -41,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _extractKeycloakId() {
     try {
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(widget.accessToken);
+      final decodedToken = JwtDecoder.decode(widget.accessToken);
       _keycloakId = decodedToken['sub'];
     } catch (e) {
       debugPrint('Error decoding Keycloak token: $e');
@@ -60,56 +62,23 @@ class _HomeScreenState extends State<HomeScreen> {
       wsUrl: '$wsBaseUrl?token=${widget.accessToken}',
       currentKeycloakId: _keycloakId!,
       onAssignmentReceived: (alertType, x, y) {
-        _showAssignmentPopup(alertType, x, y);
+        if (mounted) {
+          AssignmentDialog.show(
+            context: context,
+            alertType: alertType,
+            x: x,
+            y: y,
+          );
+        }
       },
-    );
-  }
-
-  void _showAssignmentPopup(String alertType, double x, double y) {
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        actionsAlignment: MainAxisAlignment.center,
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.center, // Centers title elements
-          children: [
-            Icon(Icons.assignment_turned_in, color: Colors.redAccent, size: 28),
-            SizedBox(width: 8),
-            Text('New alert!'),
-          ],
-        ),
-        content: Text(
-          'You have been assigned to handle an alert of type $alertType at location ($x, $y)!',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center, // Centers content body text
-          textDirection: TextDirection.ltr,
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showEmergencyDialog(LatLng? location) {
     if (location == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot send report: Location data not available.'),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
+      SnackBarUtils.showWarning(
+        context,
+        'Cannot send report: Location data not available.',
       );
       return;
     }
@@ -126,20 +95,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _submitEmergencyReport({
+  Future<void> _submitEmergencyReport({
     required LatLng location,
     required String alertType,
     required int severity,
   }) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Broadcasting emergency alert...'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    SnackBarUtils.showInfo(context, 'Broadcasting emergency alert...');
 
-    bool isSuccess = await AlertService.sendEmergencyAlert(
+    final isSuccess = await AlertService.sendEmergencyAlert(
       latitude: location.latitude,
       longitude: location.longitude,
       token: widget.accessToken,
@@ -149,26 +112,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isSuccess ? Icons.check_circle : Icons.error_outline,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              isSuccess
-                  ? 'Emergency report ($alertType) sent!'
-                  : 'Failed to send report. Backend error.',
-            ),
-          ],
-        ),
-        backgroundColor: isSuccess ? Colors.green : Colors.grey[900],
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-      ),
+    SnackBarUtils.showReportStatus(
+      context,
+      isSuccess: isSuccess,
+      alertType: alertType,
     );
   }
 
