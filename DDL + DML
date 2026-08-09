@@ -93,139 +93,139 @@ VALUES ('Or Hildesheim', 'Team 1', true);
 --Savidor Center Train 
 INSERT INTO camera.alerts (severity, alert_type, alert_time, status, location, camera_id)
 VALUES
-(5, 'Intrusion', now() - interval '2 minutes', 'active',
+(5, 'Intrusion', now() - interval '2 minutes', 'open',
  (SELECT location FROM camera.cameras WHERE name='Savidor Center Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Savidor Center Train')),
 
-(3, 'Loitering', now() - interval '20 minutes', 'active',
+(3, 'Loitering', now() - interval '20 minutes', 'open',
  (SELECT location FROM camera.cameras WHERE name='Savidor Center Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Savidor Center Train')),
 
-(1, 'Motion', now() - interval '2 hours', 'inactive',
+(1, 'Motion', now() - interval '2 hours', 'closed',
  (SELECT location FROM camera.cameras WHERE name='Savidor Center Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Savidor Center Train'));
 
 
 --Canyon Azrieli Haifa 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),4,'Fire',now()-interval '5 min','active',
+(gen_random_uuid(),4,'Fire',now()-interval '5 min','open',
  (SELECT location FROM camera.cameras WHERE name='Canyon Azrieli Haifa'),
  (SELECT camera_id FROM camera.cameras WHERE name='Canyon Azrieli Haifa')),
 
-(gen_random_uuid(),2,'Motion',now()-interval '1 hour','inactive',
+(gen_random_uuid(),2,'Motion',now()-interval '1 hour','closed',
  (SELECT location FROM camera.cameras WHERE name='Canyon Azrieli Haifa'),
  (SELECT camera_id FROM camera.cameras WHERE name='Canyon Azrieli Haifa')),
 
-(gen_random_uuid(),5,'Intrusion',now()-interval '3 hours','active',
+(gen_random_uuid(),5,'Intrusion',now()-interval '3 hours','open',
  (SELECT location FROM camera.cameras WHERE name='Canyon Azrieli Haifa'),
  (SELECT camera_id FROM camera.cameras WHERE name='Canyon Azrieli Haifa')),
 
-(gen_random_uuid(),3,'Loitering',now()-interval '1 day','inactive',
+(gen_random_uuid(),3,'Loitering',now()-interval '1 day','closed',
  (SELECT location FROM camera.cameras WHERE name='Canyon Azrieli Haifa'),
  (SELECT camera_id FROM camera.cameras WHERE name='Canyon Azrieli Haifa'));
 
 
 --Netanya Stadium 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),1,'Crowd',now()-interval '10 min','active',
+(gen_random_uuid(),1,'Crowd',now()-interval '10 min','open',
  (SELECT location FROM camera.cameras WHERE name='Netania Stadium'),
  (SELECT camera_id FROM camera.cameras WHERE name='Netania Stadium')),
 
-(gen_random_uuid(),4,'Intrusion',now()-interval '50 min','active',
+(gen_random_uuid(),4,'Intrusion',now()-interval '50 min','open',
  (SELECT location FROM camera.cameras WHERE name='Netania Stadium'),
  (SELECT camera_id FROM camera.cameras WHERE name='Netania Stadium')),
 
-(gen_random_uuid(),2,'Motion',now()-interval '5 hours','inactive',
+(gen_random_uuid(),2,'Motion',now()-interval '5 hours','closed',
  (SELECT location FROM camera.cameras WHERE name='Netania Stadium'),
  (SELECT camera_id FROM camera.cameras WHERE name='Netania Stadium'));
 
 
 --Kinneret 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),5,'Fire',now()-interval '6 min','active',
+(gen_random_uuid(),5,'Fire',now()-interval '6 min','open',
  (SELECT location FROM camera.cameras WHERE name='Kinneret'),
  (SELECT camera_id FROM camera.cameras WHERE name='Kinneret')),
 
-(gen_random_uuid(),3,'Motion',now()-interval '25 min','active',
+(gen_random_uuid(),3,'Motion',now()-interval '25 min','open',
  (SELECT location FROM camera.cameras WHERE name='Kinneret'),
  (SELECT camera_id FROM camera.cameras WHERE name='Kinneret')),
 
-(gen_random_uuid(),2,'Vehicle',now()-interval '2 days','inactive',
+(gen_random_uuid(),2,'Vehicle',now()-interval '2 days','closed',
  (SELECT location FROM camera.cameras WHERE name='Kinneret'),
  (SELECT camera_id FROM camera.cameras WHERE name='Kinneret')),
 
-(gen_random_uuid(),4,'Intrusion',now()-interval '3 days','inactive',
+(gen_random_uuid(),4,'Intrusion',now()-interval '3 days','closed',
  (SELECT location FROM camera.cameras WHERE name='Kinneret'),
  (SELECT camera_id FROM camera.cameras WHERE name='Kinneret'));
 
 
 --Mount Herzl 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),5,'Intrusion',now()-interval '15 min','active',
+(gen_random_uuid(),5,'Intrusion',now()-interval '15 min','open',
  (SELECT location FROM camera.cameras WHERE name='Hertzl Mount'),
  (SELECT camera_id FROM camera.cameras WHERE name='Hertzl Mount')),
 
-(gen_random_uuid(),1,'Motion',now()-interval '45 min','inactive',
+(gen_random_uuid(),1,'Motion',now()-interval '45 min','closed',
  (SELECT location FROM camera.cameras WHERE name='Hertzl Mount'),
  (SELECT camera_id FROM camera.cameras WHERE name='Hertzl Mount')),
 
-(gen_random_uuid(),3,'Loitering',now()-interval '10 hours','inactive',
+(gen_random_uuid(),3,'Loitering',now()-interval '10 hours','closed',
  (SELECT location FROM camera.cameras WHERE name='Hertzl Mount'),
  (SELECT camera_id FROM camera.cameras WHERE name='Hertzl Mount'));
 
 
 --Yad Vashem 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),4,'Crowd',now()-interval '12 min','active',
+(gen_random_uuid(),4,'Crowd',now()-interval '12 min','open',
  (SELECT location FROM camera.cameras WHERE name='Yad Vashem'),
  (SELECT camera_id FROM camera.cameras WHERE name='Yad Vashem')),
 
-(gen_random_uuid(),2,'Motion',now()-interval '40 min','active',
+(gen_random_uuid(),2,'Motion',now()-interval '40 min','open',
  (SELECT location FROM camera.cameras WHERE name='Yad Vashem'),
  (SELECT camera_id FROM camera.cameras WHERE name='Yad Vashem')),
 
-(gen_random_uuid(),5,'Fire',now()-interval '1 day','inactive',
+(gen_random_uuid(),5,'Fire',now()-interval '1 day','closed',
  (SELECT location FROM camera.cameras WHERE name='Yad Vashem'),
  (SELECT camera_id FROM camera.cameras WHERE name='Yad Vashem'));
 
 
 --Dead Sea 
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),5,'Intrusion',now()-interval '3 min','active',
+(gen_random_uuid(),5,'Intrusion',now()-interval '3 min','open',
  (SELECT location FROM camera.cameras WHERE name='Dead Sea'),
  (SELECT camera_id FROM camera.cameras WHERE name='Dead Sea')),
 
-(gen_random_uuid(),4,'Vehicle',now()-interval '1 hour','active',
+(gen_random_uuid(),4,'Vehicle',now()-interval '1 hour','open',
  (SELECT location FROM camera.cameras WHERE name='Dead Sea'),
  (SELECT camera_id FROM camera.cameras WHERE name='Dead Sea')),
 
-(gen_random_uuid(),1,'Motion',now()-interval '6 hours','inactive',
+(gen_random_uuid(),1,'Motion',now()-interval '6 hours','open',
  (SELECT location FROM camera.cameras WHERE name='Dead Sea'),
  (SELECT camera_id FROM camera.cameras WHERE name='Dead Sea'));
 
 
 --Binyamina Train
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),2,'Loitering',now()-interval '8 min','active',
+(gen_random_uuid(),2,'Loitering',now()-interval '8 min','open',
  (SELECT location FROM camera.cameras WHERE name='Binyamina Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Binyamina Train')),
 
-(gen_random_uuid(),3,'Motion',now()-interval '30 min','inactive',
+(gen_random_uuid(),3,'Motion',now()-interval '30 min','closed',
  (SELECT location FROM camera.cameras WHERE name='Binyamina Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Binyamina Train')),
 
-(gen_random_uuid(),4,'Intrusion',now()-interval '4 hours','inactive',
+(gen_random_uuid(),4,'Intrusion',now()-interval '4 hours','closed',
  (SELECT location FROM camera.cameras WHERE name='Binyamina Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Binyamina Train'));
 
 
 --Carmel Beach Train
 INSERT INTO camera.alerts VALUES
-(gen_random_uuid(),3,'Vehicle',now()-interval '11 min','active',
+(gen_random_uuid(),3,'Vehicle',now()-interval '11 min','open',
  (SELECT location FROM camera.cameras WHERE name='Carmel Beach Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Carmel Beach Train')),
 
-(gen_random_uuid(),4,'Crowd',now()-interval '3 hours','inactive',
+(gen_random_uuid(),4,'Crowd',now()-interval '3 hours','closed',
  (SELECT location FROM camera.cameras WHERE name='Carmel Beach Train'),
  (SELECT camera_id FROM camera.cameras WHERE name='Carmel Beach Train'));
 

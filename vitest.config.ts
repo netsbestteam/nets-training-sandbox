@@ -20,6 +20,7 @@ export default defineConfig({
     alias: {
       "@shared": path.resolve(__dirname, "./shared/src"),
       "@shared-backend": path.resolve(__dirname, "./shared-backend/src"),
+      "@cloud-runs": path.resolve(__dirname, "./cloud-runs"),
     },
   },
 });

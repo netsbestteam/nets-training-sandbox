@@ -15,7 +15,7 @@ export const MapBoundsSchema = z.object({
 export const AlertSchema = z.object({
   severity: z.number().gte(1).lte(5),
   status: z.enum(["open", "closed"]),
-  type: z.string().optional(),
+  alert_type: z.string().optional(),
   location: LocationSchema.optional(),
   camera_id: z.uuid().optional(),
 });
@@ -32,7 +32,9 @@ export const UpdateAlertStatus = z.object({
 });
 
 export const AlertAssignment = z.object({
-  investigatorId: z.uuid(),
+  investigatorIds: z
+    .array(z.string().uuid())
+    .min(1, "At least one investigator must be selected"),
 });
 
 export type AlertInput = z.infer<typeof AlertSchema>;

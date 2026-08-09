@@ -3,16 +3,16 @@ import {
   AlertAssignment,
   AlertSchema,
   UpdateAlertStatus,
-} from "../../../../shared/src/schemas/management";
-import { db } from "../../../../shared-backend/src/db";
+} from "@shared/schemas/management";
+import { db } from "@shared-backend/db";
 import {
   alert_assignments,
   alerts,
-} from "../../../../shared-backend/src/db/schema";
+} from "@shared-backend/db/schema";
 import { eq } from "drizzle-orm";
-import { logger } from "../../../../shared-backend/src/logger";
-import { js } from "../../../dispatcher-service/nats/nats.plugin";
-import { AlertEvents } from "../../../../shared/src/events";
+import { logger } from "@shared-backend/logger";
+import { js } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "@shared/events";
 import { JSONCodec } from "nats";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
@@ -42,7 +42,11 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         }
 
         if (server) {
-          server.publish("all-alerts", JSON.stringify({ data: body }));
+          const insertedAlert = await db
+            .select()
+            .from(alerts)
+            .where(eq(alerts.alert_id, newAlertId));
+          server.publish("all-alerts", JSON.stringify({ data: insertedAlert }));
 
           // Publish to jetstream
           await js.publish(
@@ -70,6 +74,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           .set({ status: body.status })
           .where(eq(alerts.alert_id, params.id));
 
+        logger.info("PATCH alert status successfull.");
         return { status: body.status };
       } catch (e: unknown) {
         logger.error("Error PATCH alert status: " + e);
@@ -82,27 +87,61 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     "/:id/assign",
     async ({ params, body }) => {
       try {
-        logger.info("Attempting POST new alert assignment...");
-
-        await db.insert(alert_assignments).values({
-          investigatorId: body.investigatorId,
-          alertId: params.id,
-        });
-
-        // Publish event to jetstream
-        await js.publish(
-          AlertEvents.Assigned,
-          JSONCodec().encode({
-            investigatorId: body.investigatorId,
-            alertId: params.id,
-          }),
+        logger.info(
+          `Attempting POST bulk alert assignments for alert: ${params.id}`,
         );
+
+        const alertId = params.id;
+        const incomingIds = body.investigatorIds;
+
+        const currentAssignments = await db
+          .select({ investigatorId: alert_assignments.investigator_id })
+          .from(alert_assignments)
+          .where(eq(alert_assignments.alert_id, alertId));
+
+        const currentIds = currentAssignments.map((row) => row.investigatorId);
+
+        const newlyAssignedIds = incomingIds.filter(
+          (id) => !currentIds.includes(id),
+        );
+
+        // delete all of the current assigned investigators
+        await db
+          .delete(alert_assignments)
+          .where(eq(alert_assignments.alert_id, alertId));
+
+        if (incomingIds.length === 0) {
+          return { data: body };
+        }
+
+        const assignmentRows = incomingIds.map((id: string) => ({
+          investigator_id: id,
+          alert_id: alertId,
+        }));
+
+        await db.insert(alert_assignments).values(assignmentRows);
+
+        // only publish events for investigators who are newly added
+        const codec = JSONCodec();
+        const publishPromises = newlyAssignedIds.map((id: string) =>
+          js.publish(
+            AlertEvents.Assigned,
+            codec.encode({
+              investigatorId: id,
+              alertId: alertId,
+            }),
+          ),
+        );
+
+        await Promise.all(publishPromises);
 
         return { data: body };
       } catch (e: unknown) {
-        logger.error("Error POST new alert assignment: " + e);
+        logger.error("Error POST bulk alert assignment: " + e);
         throw e;
       }
     },
-    { body: AlertAssignment },
+    {
+      body: AlertAssignment,
+    },
   );

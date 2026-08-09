@@ -15,7 +15,7 @@ vi.mock("jose", () => ({
 }));
 
 // mock NATS
-vi.mock("../../../dispatcher-service/nats/nats.plugin", () => ({
+vi.mock("@cloud-runs/dispatcher-service/nats/nats.plugin", () => ({
   js: {
     publish: vi.fn().mockResolvedValue({ sequence: 1 }),
   },
