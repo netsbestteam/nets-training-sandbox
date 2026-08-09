@@ -22,14 +22,12 @@ class WebSocketService {
 
           final data = jsonDecode(message);
 
-          if (data['event'] == 'alerts.assigned' ||
-              data['type'] == 'alerts.assigned') {
-            final payload = data['data'] ?? data['payload'] ?? data;
+          if (data['event'] == 'alerts.assigned') {
+            final payload = data['data'];
 
             bool isAssignedToMe = false;
 
-            final assignedId =
-                payload['investigatorId'] ?? payload['keycloak_id'];
+            final assignedId = payload['investigatorId'];
 
             if (assignedId == currentKeycloakId) {
               isAssignedToMe = true;
@@ -47,8 +45,7 @@ class WebSocketService {
             );
 
             if (isAssignedToMe) {
-              final alertType =
-                  payload['alertType'] ?? payload['alertId'] ?? 'Emergency';
+              final alertType = payload['alertType'];
               final loc = payload['location'] ?? {};
               final double x = (loc['x'] as num?)?.toDouble() ?? 0.0;
               final double y = (loc['y'] as num?)?.toDouble() ?? 0.0;
