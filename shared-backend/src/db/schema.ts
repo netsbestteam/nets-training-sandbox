@@ -91,6 +91,9 @@ export const alert_assignments = cameraSchema.table(
     assignment_end: timestamp("assignment_end", { withTimezone: true }),
   },
   (table) => [
-    primaryKey({ name: "id", columns: [table.investigatorId, table.alertId] }),
+    primaryKey({
+      name: "id",
+      columns: [table.investigator_id, table.alert_id],
+    }),
   ],
 );

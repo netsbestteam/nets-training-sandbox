@@ -1,11 +1,8 @@
 import Elysia from "elysia";
-import { logger } from "../../../../shared-backend/src/logger";
+import { logger } from "@shared-backend/logger";
 import { AckPolicy, JSONCodec } from "nats";
-import { AlertEvents } from "../../../../shared/src/events";
-import {
-  js,
-  streamManager,
-} from "../../../dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "@shared/events";
+import { js, streamManager } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
 import type { Server } from "bun";
 
 const STREAM_NAME = "ALERTS";

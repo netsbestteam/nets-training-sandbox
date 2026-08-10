@@ -1,4 +1,4 @@
-import { logger } from "../../../shared-backend/src/logger";
+import { logger } from "@shared-backend/logger";
 import { streamManager } from "./nats.plugin";
 
 export async function setupJetStream() {

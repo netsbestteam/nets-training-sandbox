@@ -1,11 +1,11 @@
 import { AckPolicy, JSONCodec } from "nats";
-import { logger } from "../../../../shared-backend/src/logger";
-import { AlertEvents } from "../../../../shared/src/events";
-import type { AlertInput } from "../../../../shared/src/schemas/management";
-import { db } from "../../../../shared-backend/src/db";
-import { alerts, cameras } from "../../../../shared-backend/src/db/schema";
+import { logger } from "@shared-backend/logger";
+import { AlertEvents } from "@shared/events";
+import type { AlertInput } from "@shared/schemas/management";
+import { db } from "@shared-backend/db";
+import { alerts, cameras } from "@shared-backend/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { js, streamManager } from "../../nats/nats.plugin";
+import { js, streamManager } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
 
 const STREAM_NAME = "ALERTS";
 const CONSUMER_NAME = "alerts-consumer";
@@ -34,7 +34,7 @@ export async function startConsumer() {
   logger.info("Starting alerts consumer");
 
   const messages = await consumer.consume();
-  const RADIUS_METERS = 1000000;
+  const RADIUS_METERS = 100000000;
 
   for await (const msg of messages) {
     try {

@@ -3,17 +3,16 @@ import {
   AlertAssignment,
   AlertSchema,
   UpdateAlertStatus,
-} from "../../../../shared/src/schemas/management";
-import { db } from "../../../../shared-backend/src/db";
+} from "@shared/schemas/management";
+import { db } from "@shared-backend/db";
 import {
   alert_assignments,
   alerts,
-  investigators,
-} from "../../../../shared-backend/src/db/schema";
-import { eq, inArray } from "drizzle-orm";
-import { logger } from "../../../../shared-backend/src/logger";
-import { js } from "../../../dispatcher-service/nats/nats.plugin";
-import { AlertEvents } from "../../../../shared/src/events";
+} from "@shared-backend/db/schema";
+import { eq } from "drizzle-orm";
+import { logger } from "@shared-backend/logger";
+import { js } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
+import { AlertEvents } from "@shared/events";
 import { JSONCodec } from "nats";
 
 export const alertRoutes = new Elysia({ prefix: "/alerts" })
@@ -44,7 +43,11 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         }
 
         if (server) {
-          server.publish("all-alerts", JSON.stringify({ data: body }));
+          const insertedAlert = await db
+            .select()
+            .from(alerts)
+            .where(eq(alerts.alert_id, newAlertId));
+          server.publish("all-alerts", JSON.stringify({ data: insertedAlert }));
 
           // Publish to jetstream
           await js.publish(
@@ -72,6 +75,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
           .set({ status: body.status })
           .where(eq(alerts.alert_id, params.id));
 
+        logger.info("PATCH alert status successfull.");
         return { status: body.status };
       } catch (e: unknown) {
         logger.error("Error PATCH alert status: " + e);
@@ -140,9 +144,11 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
 
         return { data: body };
       } catch (e: unknown) {
-        logger.error("Error POST new alert assignment: " + e);
+        logger.error("Error POST bulk alert assignment: " + e);
         throw e;
       }
     },
-    { body: AlertAssignment },
+    {
+      body: AlertAssignment,
+    },
   );
