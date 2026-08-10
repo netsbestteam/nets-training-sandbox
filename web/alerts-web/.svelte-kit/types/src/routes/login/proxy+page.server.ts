@@ -3,6 +3,7 @@ import { redirect, error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { KEYCLOAK_ID, KEYCLOAK_ISSUER } from '$env/static/private';
 import { dev } from '$app/environment';
+import { logger } from '@shared-backend/logger/index';
 
 // helper function to create PKCE
 function generateVerifier(): string {
@@ -51,7 +52,7 @@ export const load = async ({ url, cookies }: Parameters<PageServerLoad>[0]) => {
 
 			if (!tokenResponse.ok) {
 				const errText = await tokenResponse.text();
-				console.error('Keycloak token error details:', errText);
+				logger.error('Keycloak token error details:' + errText);
 				throw error(400, 'Failed to fetch tokens from Keycloak');
 			}
 
@@ -71,7 +72,7 @@ export const load = async ({ url, cookies }: Parameters<PageServerLoad>[0]) => {
 
 			shouldRedirect = true;
 		} catch (err) {
-			console.error('Login error during token exchange:', err);
+			logger.error('Login error during token exchange:' + err);
 			return { error: 'Authentication failed' };
 		}
 	}

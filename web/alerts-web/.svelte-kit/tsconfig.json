@@ -1,6 +1,12 @@
 {
 	"compilerOptions": {
 		"paths": {
+			"@shared-backend": [
+				"../../../shared-backend/src"
+			],
+			"@shared-backend/*": [
+				"../../../shared-backend/src/*"
+			],
 			"$lib": [
 				"../src/lib"
 			],

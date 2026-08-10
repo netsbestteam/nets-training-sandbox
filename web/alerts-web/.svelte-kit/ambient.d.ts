@@ -53,6 +53,7 @@ declare module '$env/static/private' {
 	export const ZDOTDIR: string;
 	export const MallocNanoZone: string;
 	export const npm_config_local_prefix: string;
+	export const COPILOT_DEBUG_NONCE: string;
 	export const USER: string;
 	export const VSCODE_LOGIN_INITIALIZED: string;
 	export const COMMAND_MODE: string;
@@ -197,6 +198,7 @@ declare module '$env/dynamic/private' {
 		ZDOTDIR: string;
 		MallocNanoZone: string;
 		npm_config_local_prefix: string;
+		COPILOT_DEBUG_NONCE: string;
 		USER: string;
 		VSCODE_LOGIN_INITIALIZED: string;
 		COMMAND_MODE: string;
