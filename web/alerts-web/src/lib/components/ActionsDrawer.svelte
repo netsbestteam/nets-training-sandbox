@@ -5,6 +5,7 @@
 	import { logger } from '@shared-backend/logger/index';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import type { Alert } from './TableColumns/AlertsColumns';
+	import { toast } from 'svelte-sonner';
 
 	export interface Investigator {
 		investigator_id: string;
@@ -124,6 +125,8 @@
 					}
 					await invalidateAll();
 					open = false;
+
+					toast.success(`Alert #${alert?.alert_id} status updated to '${submittedStatus}'.`);
 				} else if (result.type === 'failure') {
 					statusError =
 						(result.data?.message as string) ||

@@ -75,7 +75,7 @@ export const actions: Actions = {
 
 		try {
 			const url = `${baseUrl}/alerts/${alertId}/status`;
-			logger.info(`🔗 Fetching URL: ${url}`);
+			logger.info(`Fetching URL: ${url}`);
 
 			const response = await fetch(url, {
 				method: 'PATCH',

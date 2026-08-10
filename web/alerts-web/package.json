@@ -44,6 +44,7 @@
 	"type": "module",
 	"dependencies": {
 		"@tanstack/svelte-table": "^8.21.3",
-		"leaflet": "^1.9.4"
+		"leaflet": "^1.9.4",
+		"svelte-sonner": "^1.1.1"
 	}
 }
