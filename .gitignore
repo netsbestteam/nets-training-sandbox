@@ -34,3 +34,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 
 web/alerts-web/.svelte-kit
+web/alerts-web/src/lib/vitest-examples
+mobile/alerts_mobile/android
+mobile/alerts_mobile/ios
+mobile/alerts_mobile/linux
+mobile/alerts_mobile/macos
+mobile/alerts_mobile/web
+mobile/alerts_mobile/windows
