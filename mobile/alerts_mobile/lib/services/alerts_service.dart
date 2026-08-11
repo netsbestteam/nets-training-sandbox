@@ -5,8 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AlertService {
-  static final String _baseUrl =
-      dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:3000';
+  static final String _baseUrl = dotenv.env['API_BASE_URL']!;
 
   static Future<bool> sendEmergencyAlert({
     required double latitude,

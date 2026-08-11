@@ -10,12 +10,9 @@ class AuthService {
 
   static const String _tokenKey = 'jwt_access_token';
 
-  static final String _clientId = dotenv.env['KEYCLOAK_CLIENT_ID'] ?? 'public';
-  static final String _redirectUrl =
-      dotenv.env['KEYCLOAK_REDIRECT_URL'] ?? 'myflutterapp://oauthredirect';
-  static final String _realmUrl =
-      dotenv.env['KEYCLOAK_REALM_URL'] ??
-      'http://10.0.2.2:8080/realms/nets-sandbox';
+  static final String _clientId = dotenv.env['KEYCLOAK_CLIENT_ID']!;
+  static final String _redirectUrl = dotenv.env['KEYCLOAK_REDIRECT_URL']!;
+  static final String _realmUrl = dotenv.env['KEYCLOAK_REALM_URL']!;
 
   static const List<String> _scopes = ['openid', 'profile', 'email'];
 
@@ -44,6 +41,15 @@ class AuthService {
       if (result != null && result.accessToken != null) {
         debugPrint("Token acquired. Saving...");
         await _secureStorage.write(key: _tokenKey, value: result.accessToken);
+
+        if (result.refreshToken != null) {
+          debugPrint("Refresh token acquired. Saving...");
+          await _secureStorage.write(
+            key: 'refresh_token',
+            value: result.refreshToken,
+          );
+        }
+
         return result.accessToken;
       } else {
         debugPrint("Authorization finished but token was null.");

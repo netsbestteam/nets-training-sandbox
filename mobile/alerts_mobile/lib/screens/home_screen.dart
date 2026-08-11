@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    final wsBaseUrl = dotenv.env['WS_BASE_URL'] ?? 'ws://10.0.2.2:3001/socket';
+    final wsBaseUrl = dotenv.env['WS_BASE_URL'];
 
     _webSocketService.connect(
       wsUrl: '$wsBaseUrl?token=${widget.accessToken}',

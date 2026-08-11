@@ -7,7 +7,7 @@ class PermissionService {
       debugPrint("checking location permission status...");
 
       // check current status
-      var status = await Permission.location.status;
+      final status = await Permission.location.status;
 
       if (status.isGranted) {
         debugPrint("Location permission already granted.");
@@ -16,7 +16,7 @@ class PermissionService {
 
       // request the permission
       debugPrint("prompting user for location permission...");
-      var result = await Permission.location.request();
+      final result = await Permission.location.request();
 
       if (result.isGranted) {
         debugPrint("location permission granted by user.");
