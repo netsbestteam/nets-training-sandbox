@@ -72,6 +72,7 @@ export const investigators = cameraSchema.table("investigators", {
   full_name: text().notNull(),
   team: text(),
   is_active: boolean().notNull(),
+  keycloakId: text("keycloak_id"),
 });
 
 export const alert_assignments = cameraSchema.table(
@@ -83,7 +84,7 @@ export const alert_assignments = cameraSchema.table(
         onDelete: "restrict",
       },
     ),
-    alert_id: uuid("alert_id").references(() => alerts.alert_id, {
+    alertId: uuid("alert_id").references(() => alerts.alert_id, {
       onDelete: "cascade",
     }),
     assignment_start: timestamp("assignment_start", { withTimezone: true }),
@@ -92,7 +93,7 @@ export const alert_assignments = cameraSchema.table(
   (table) => [
     primaryKey({
       name: "id",
-      columns: [table.investigator_id, table.alert_id],
+      columns: [table.investigator_id, table.alertId],
     }),
   ],
 );

@@ -1,10 +1,7 @@
 import Elysia from "elysia";
 import { logger } from "@shared-backend/logger";
 import { db } from "@shared-backend/db";
-import {
-  alert_assignments,
-  investigators,
-} from "@shared-backend/db/schema";
+import { alert_assignments, investigators } from "@shared-backend/db/schema";
 import { eq } from "drizzle-orm";
 
 export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
@@ -33,7 +30,7 @@ export const investigatorRoutes = new Elysia({ prefix: "/investigators" })
           investigators,
           eq(alert_assignments.investigator_id, investigators.investigator_id),
         )
-        .where(eq(alert_assignments.alert_id, params.alertId));
+        .where(eq(alert_assignments.alertId, params.alertId));
 
       logger.info(`investigators retrieved successfully`);
       return results;

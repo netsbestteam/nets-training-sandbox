@@ -85,21 +85,20 @@
 		if (!alert) return;
 		isSaving = true;
 
-		logger.info(assigned);
+		const validIds = assigned
+			.map((i: any) => i.investigator_id ?? i.investigatorId ?? i.id)
+			.filter((id): id is string => typeof id === 'string' && id.length > 0);
+
 		try {
 			const response = await fetch(`/api/alerts/${alert.alert_id}/assign`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					investigatorIds: assigned.map((i) => i.investigator_id)
-				})
+				body: JSON.stringify({ investigatorIds: validIds })
 			});
 
 			if (!response.ok) throw new Error('Failed to save');
 
-			// reload to get fresh data
 			await invalidateAll();
-
 			open = false;
 		} catch (err) {
 			logger.error('Failed to assign investigators: ' + err);

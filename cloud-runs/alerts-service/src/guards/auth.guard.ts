@@ -9,21 +9,33 @@ const JWKS = createRemoteJWKSet(
 );
 
 export const authGuard = (app: Elysia) =>
-  app.derive(async ({ headers }) => {
-    const authHeader = headers["authorization"];
+  app.derive(async ({ headers, query }) => {
+    let token: string | undefined;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedError();
+    const authHeader = headers["authorization"];
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
     }
 
-    // continue
+    if (!token && typeof query?.token === "string") {
+      token = query.token;
+    }
 
-    const token = authHeader.split(" ")[1]!;
+    if (!token) {
+      throw new UnauthorizedError("Missing authorization token");
+    }
 
     try {
       const { payload } = await jwtVerify(token, JWKS);
+
+      const expectedRealm = `/realms/${process.env.KEYCLOAK_REALM_NAME}`;
+      if (!payload.iss || !payload.iss.endsWith(expectedRealm)) {
+        throw new UnauthorizedError("Invalid token issuer");
+      }
+
       return { user: payload };
     } catch (error) {
+      if (error instanceof UnauthorizedError) throw error;
       throw new UnauthorizedError("Invalid or expired token");
     }
   });

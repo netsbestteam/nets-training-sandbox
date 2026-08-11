@@ -8,8 +8,9 @@ import { db } from "@shared-backend/db";
 import {
   alert_assignments,
   alerts,
+  investigators,
 } from "@shared-backend/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { logger } from "@shared-backend/logger";
 import { js } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
 import { AlertEvents } from "@shared/events";
@@ -30,6 +31,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     async ({ body, server }) => {
       try {
         logger.info("Attempting POST new alert");
+
         const inserted = await db
           .insert(alerts)
           .values(body)
@@ -83,65 +85,86 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
     },
     { body: UpdateAlertStatus },
   )
+
   .post(
     "/:id/assign",
-    async ({ params, body }) => {
+    async ({ params, body, server }) => {
+      logger.info(
+        `Attempting POST alert assignment for alert ID: ${params.id}`,
+      );
+
+      // find the alert record in the database
+      const [alertRecord] = await db
+        .select()
+        .from(alerts)
+        .where(eq(alerts.alert_id, params.id));
+
+      if (!alertRecord) {
+        return { error: "Alert not found" };
+      }
+
+      const investigatorIds: string[] = body.investigatorIds ?? [];
+
       try {
-        logger.info(
-          `Attempting POST bulk alert assignments for alert: ${params.id}`,
-        );
-
-        const alertId = params.id;
-        const incomingIds = body.investigatorIds;
-
-        const currentAssignments = await db
-          .select({ investigatorId: alert_assignments.investigator_id })
-          .from(alert_assignments)
-          .where(eq(alert_assignments.alert_id, alertId));
-
-        const currentIds = currentAssignments.map((row) => row.investigatorId);
-
-        const newlyAssignedIds = incomingIds.filter(
-          (id) => !currentIds.includes(id),
-        );
-
-        // delete all of the current assigned investigators
+        // delete the current assigned investigators from the alert_assignments table
         await db
           .delete(alert_assignments)
-          .where(eq(alert_assignments.alert_id, alertId));
+          .where(eq(alert_assignments.alertId, params.id));
 
-        if (incomingIds.length === 0) {
-          return { data: body };
+        // insert the new assigned investigators
+        if (investigatorIds.length > 0) {
+          await db.insert(alert_assignments).values(
+            investigatorIds.map((id) => ({
+              investigator_id: id,
+              alertId: params.id,
+            })),
+          );
+
+          // notify the investigators
+          await notifyAssignedInvestigators({
+            alertRecord,
+            investigatorIds,
+            server,
+          });
         }
 
-        const assignmentRows = incomingIds.map((id: string) => ({
-          investigator_id: id,
-          alert_id: alertId,
-        }));
-
-        await db.insert(alert_assignments).values(assignmentRows);
-
-        // only publish events for investigators who are newly added
-        const codec = JSONCodec();
-        const publishPromises = newlyAssignedIds.map((id: string) =>
-          js.publish(
-            AlertEvents.Assigned,
-            codec.encode({
-              investigatorId: id,
-              alertId: alertId,
-            }),
-          ),
-        );
-
-        await Promise.all(publishPromises);
-
-        return { data: body };
+        return { success: true, count: investigatorIds.length };
       } catch (e: unknown) {
         logger.error("Error POST bulk alert assignment: " + e);
         throw e;
       }
     },
-    {
-      body: AlertAssignment,
-    },
+    { body: AlertAssignment },
   );
+async function notifyAssignedInvestigators({
+  alertRecord,
+  investigatorIds,
+  server,
+}: {
+  alertRecord: typeof alerts.$inferSelect;
+  investigatorIds: string[];
+  server: any;
+}) {
+  const assignedInvestigators = await db
+    .select({
+      id: investigators.investigator_id,
+      keycloakId: investigators.keycloakId,
+    })
+    .from(investigators)
+    .where(inArray(investigators.investigator_id, investigatorIds));
+
+  for (const investigator of assignedInvestigators) {
+    const payload = {
+      event: AlertEvents.Assigned,
+      payload: {
+        investigatorId: investigator.keycloakId ?? String(investigator.id),
+        alertId: alertRecord.alert_id,
+        alertType: alertRecord.alert_type ?? alertRecord.alert_id,
+        location: alertRecord.location,
+      },
+    };
+
+    await js.publish(AlertEvents.Assigned, JSONCodec().encode(payload.payload));
+    server?.publish("alerts", JSON.stringify(payload));
+  }
+}
