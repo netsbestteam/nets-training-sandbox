@@ -89,63 +89,43 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .post(
     "/:id/assign",
     async ({ params, body, server }) => {
+      logger.info(
+        `Attempting POST alert assignment for alert ID: ${params.id}`,
+      );
+
+      // find the alert record in the database
+      const [alertRecord] = await db
+        .select()
+        .from(alerts)
+        .where(eq(alerts.alert_id, params.id));
+
+      if (!alertRecord) {
+        return { error: "Alert not found" };
+      }
+
+      const investigatorIds: string[] = body.investigatorIds ?? [];
+
       try {
-        logger.info(
-          `Attempting POST alert assignment for alert ID: ${params.id}`,
-        );
-
-        const [alertRecord] = await db
-          .select()
-          .from(alerts)
-          .where(eq(alerts.alert_id, params.id));
-
-        if (!alertRecord) {
-          return { error: "Alert not found" };
-        }
-
-        const investigatorIds: string[] = body.investigatorIds ?? [];
-
+        // delete the current assigned investigators from the alert_assignments table
         await db
           .delete(alert_assignments)
           .where(eq(alert_assignments.alertId, params.id));
 
+        // insert the new assigned investigators
         if (investigatorIds.length > 0) {
-          const assignmentsToInsert = investigatorIds.map((id) => ({
-            investigator_id: id,
-            alertId: params.id,
-          }));
+          await db.insert(alert_assignments).values(
+            investigatorIds.map((id) => ({
+              investigator_id: id,
+              alertId: params.id,
+            })),
+          );
 
-          await db.insert(alert_assignments).values(assignmentsToInsert);
-
-          const assignedInvestigators = await db
-            .select({
-              id: investigators.investigator_id,
-              keycloakId: investigators.keycloakId,
-            })
-            .from(investigators)
-            .where(inArray(investigators.investigator_id, investigatorIds));
-
-          for (const investigator of assignedInvestigators) {
-            const targetKeycloakId =
-              investigator.keycloakId ?? String(investigator.id);
-
-            const payload = {
-              event: AlertEvents.Assigned,
-              payload: {
-                investigatorId: targetKeycloakId,
-                alertId: params.id,
-                alertType: alertRecord.alert_type ?? alertRecord.alert_id,
-                location: alertRecord.location,
-              },
-            };
-
-            await js.publish(
-              AlertEvents.Assigned,
-              JSONCodec().encode(payload.payload),
-            );
-
-            server?.publish("alerts", JSON.stringify(payload));
-          }
+          // notify the investigators
+          await notifyAssignedInvestigators({
+            alertRecord,
+            investigatorIds,
+            server,
+          });
         }
 
         return { success: true, count: investigatorIds.length };
@@ -154,7 +134,37 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
         throw e;
       }
     },
-    {
-      body: AlertAssignment,
-    },
+    { body: AlertAssignment },
   );
+async function notifyAssignedInvestigators({
+  alertRecord,
+  investigatorIds,
+  server,
+}: {
+  alertRecord: typeof alerts.$inferSelect;
+  investigatorIds: string[];
+  server: any;
+}) {
+  const assignedInvestigators = await db
+    .select({
+      id: investigators.investigator_id,
+      keycloakId: investigators.keycloakId,
+    })
+    .from(investigators)
+    .where(inArray(investigators.investigator_id, investigatorIds));
+
+  for (const investigator of assignedInvestigators) {
+    const payload = {
+      event: AlertEvents.Assigned,
+      payload: {
+        investigatorId: investigator.keycloakId ?? String(investigator.id),
+        alertId: alertRecord.alert_id,
+        alertType: alertRecord.alert_type ?? alertRecord.alert_id,
+        location: alertRecord.location,
+      },
+    };
+
+    await js.publish(AlertEvents.Assigned, JSONCodec().encode(payload.payload));
+    server?.publish("alerts", JSON.stringify(payload));
+  }
+}
