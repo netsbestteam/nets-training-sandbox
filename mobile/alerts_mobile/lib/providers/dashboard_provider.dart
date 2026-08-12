@@ -65,6 +65,7 @@ class DashboardProvider extends ChangeNotifier {
         end: alertTarget,
       );
 
+      // if route fails, draw a direct line
       if (route.isEmpty) {
         debugPrint('OSRM Route unavailable. Falling back to direct line.');
         route = [userLocation, alertTarget];
@@ -73,6 +74,7 @@ class DashboardProvider extends ChangeNotifier {
       _routePoints = route;
       notifyListeners();
 
+      // fit map so the user's location and alert's location are visible
       final bounds = LatLngBounds.fromPoints([userLocation, alertTarget]);
       mapController.fitCamera(
         CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50.0)),
