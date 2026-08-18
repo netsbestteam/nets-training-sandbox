@@ -10,7 +10,7 @@ import {
   alerts,
   investigators,
 } from "@shared-backend/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { logger } from "@shared-backend/logger";
 import { js } from "@cloud-runs/dispatcher-service/nats/nats.plugin";
 import { AlertEvents } from "@shared/events";
@@ -20,7 +20,7 @@ export const alertRoutes = new Elysia({ prefix: "/alerts" })
   .get("/", async () => {
     try {
       logger.info("Getting alerts");
-      return await db.select().from(alerts);
+      return await db.select().from(alerts).orderBy(desc(alerts.alert_time));
     } catch (e: unknown) {
       logger.error("Error getting alerts: " + e);
       throw e;
